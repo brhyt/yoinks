@@ -17,23 +17,34 @@ import {addToHistory, loadHistory} from './lib/history.js'
 import {detectPlatform, isProbablyUrl, type Platform} from './lib/platforms.js'
 import {useMouseClick} from './lib/use-mouse-click.js'
 import {nextThemeMode, ThemeProvider, type ThemeMode, useTheme} from './theme.js'
-import {
-  buildChoices,
-  download,
-  ensureYtDlp,
-  findFfmpeg,
-  probe,
-  type DownloadChoice,
-  type DownloadProgress,
-  type VideoInfo,
-} from './lib/ytdlp.js'
+import {probeUrl} from './lib/extract/index.js'
+import type {Candidate, FetchProgress, Kind} from './lib/extract/types.js'
 
 const OUT_DIR = path.join(os.homedir(), 'Downloads')
 const YOINK_BUTTON = 'yoink'
 const DONE_LABEL = '↵ yoink another'
 const TAGLINE = 'yoink any video. paste. yoink. done.'
 
-const choiceLabel = (choice: DownloadChoice) => `${choice.kind === 'audio' ? '♪ ' : '▶ '}${choice.label}`
+// video and audio keep the glyphs 0.3.1 shipped — a youtube url must look
+// exactly as it always has
+const GLYPH: Record<Kind, string> = {
+  video: '▶ ',
+  audio: '♪ ',
+  image: '▧ ',
+  font: 'A ',
+  palette: '◈ ',
+  page: '▤ ',
+  snippet: '⌘ ',
+}
+
+const candidateLabel = (candidate: Candidate) => `${GLYPH[candidate.kind]}${candidate.label}`
+
+/** Page <title>, for the header on captures that aren't videos. */
+function titleFromHtml(html: string | undefined): string | undefined {
+  if (!html) return undefined
+  const found = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html)?.[1]
+  return found?.replace(/\s+/g, ' ').trim() || undefined
+}
 
 function ChoiceIndicator({isSelected}: IndicatorProps) {
   const theme = useTheme()
@@ -66,18 +77,18 @@ const Gap = ({lines = 1}: {lines?: number}) => (
 
 // fixed-width slots — the centered line must not change width as values tick,
 // otherwise the whole layout shifts on every progress update
-function partLabel(progress: DownloadProgress): string {
+function partLabel(progress: FetchProgress): string {
   // explains the bar resetting between files (video, then audio)
   return progress.totalParts > 1 ? `part ${progress.part + 1}/${progress.totalParts}  ` : ''
 }
 
-function downloadMeta(progress: DownloadProgress): string {
+function downloadMeta(progress: FetchProgress): string {
   const speed = progress.speed ? formatSpeed(progress.speed) : ''
   const eta = progress.eta ? `${formatEta(progress.eta)} left` : ''
   return `${partLabel(progress)}${speed.padStart(10)}  ${eta.padEnd(12)}`
 }
 
-function indeterminateMeta(progress: DownloadProgress): string {
+function indeterminateMeta(progress: FetchProgress): string {
   const bytes = formatBytes(progress.downloadedBytes)
   const speed = progress.speed ? formatSpeed(progress.speed) : ''
   return `${partLabel(progress)}${bytes.padStart(8)}  ${speed.padEnd(10)}`
@@ -91,10 +102,10 @@ type Phase =
   | {name: 'picking'}
   | {
       name: 'downloading'
-      choice: DownloadChoice
-      progress?: DownloadProgress
+      candidate: Candidate
+      progress?: FetchProgress
       processing: boolean
-      refreshing?: boolean
+      status?: string
     }
   | {name: 'done'; filepath: string}
   | {name: 'error'; message: string}
@@ -163,11 +174,11 @@ function AppContent({
   const [urlInput, setUrlInput] = useState('')
   const [history, setHistory] = useState(loadHistory)
   const [platform, setPlatform] = useState<Platform>()
-  const [info, setInfo] = useState<VideoInfo>()
-  const [choices, setChoices] = useState<DownloadChoice[]>([])
-  const ytdlpRef = useRef('')
-  const highlightRef = useRef(0) // choice under the cursor, for the ↵ hint click
-  const infoJsonRef = useRef<string | undefined>(undefined)
+  const [subject, setSubject] = useState<{title?: string; duration?: number; uploader?: string}>({})
+  const [candidates, setCandidates] = useState<Candidate[]>([])
+  // the cursor follows a candidate key, never an index — extractors stream in
+  // and a late arrival must not move the selection under someone's finger
+  const highlightKeyRef = useRef('')
   const abortRef = useRef<AbortController | undefined>(undefined)
   const [phase, setPhase] = useState<Phase>(initialUrl ? {name: 'probing', status: 'warming up…'} : {name: 'input'})
 
@@ -179,21 +190,38 @@ function AppContent({
     const controller = new AbortController()
     abortRef.current = controller
     setPlatform(detectPlatform(targetUrl))
+    setSubject({})
+    setCandidates([])
+    highlightKeyRef.current = ''
     setPhase({name: 'probing', status: 'warming up…'})
+
     try {
-      const ytdlp =
-        ytdlpRef.current ||
-        (await ensureYtDlp(status => setPhase({name: 'probing', status}), controller.signal))
-      ytdlpRef.current = ytdlp
-      if (controller.signal.aborted) return
-      setPhase({name: 'probing', status: 'fetching video info…'})
-      const {info: videoInfo, infoJsonPath} = await probe(ytdlp, targetUrl, controller.signal)
-      if (controller.signal.aborted) return
-      infoJsonRef.current = infoJsonPath
-      setInfo(videoInfo)
-      setChoices(buildChoices(videoInfo))
-      highlightRef.current = 0
-      setPhase({name: 'picking'})
+      for await (const event of probeUrl(targetUrl, {signal: controller.signal})) {
+        if (controller.signal.aborted) return
+
+        if (event.type === 'status') {
+          setPhase(prev => (prev.name === 'probing' ? {name: 'probing', status: event.message} : prev))
+        } else if (event.type === 'classified') {
+          const title = titleFromHtml(event.classification.html)
+          if (title) setSubject(prev => ({...prev, title: prev.title ?? title}))
+        } else if (event.type === 'candidates') {
+          const best = event.candidates.find(candidate => candidate.hint?.title)
+          if (best?.hint) {
+            setSubject(prev => ({
+              title: best.hint?.title ?? prev.title,
+              duration: best.hint?.duration ?? prev.duration,
+              uploader: prev.uploader,
+            }))
+          }
+          setCandidates(event.candidates)
+          if (!highlightKeyRef.current) highlightKeyRef.current = event.candidates[0]?.key ?? ''
+          setPhase(prev => (prev.name === 'probing' ? {name: 'picking'} : prev))
+        } else if (event.type === 'done') {
+          if (event.candidates.length === 0) {
+            setPhase({name: 'error', message: 'Nothing yoinkable at that link.'})
+          }
+        }
+      }
     } catch (error) {
       if (controller.signal.aborted) return
       setPhase({name: 'error', message: error instanceof Error ? error.message : String(error)})
@@ -208,8 +236,9 @@ function AppContent({
     setUrl('')
     setUrlInput('')
     setPlatform(undefined)
-    setInfo(undefined)
-    setChoices([])
+    setSubject({})
+    setCandidates([])
+    highlightKeyRef.current = ''
     setPhase({name: 'input'})
   }, [])
 
@@ -245,33 +274,26 @@ function AppContent({
   const clipboardOffered = Boolean(clipboardUrl) && urlInput === ''
   const clipboardAccepted = Boolean(clipboardUrl) && urlInput === clipboardUrl
 
-  const handlePick = (item: {value: number}) => {
-    const choice = choices[item.value]
+  const handlePick = (candidate: Candidate | undefined) => {
+    if (!candidate) return
     const controller = new AbortController()
     abortRef.current = controller
-    setPhase({name: 'downloading', choice, processing: false})
+    setPhase({name: 'downloading', candidate, processing: false})
+
     void (async () => {
-      const handlers = {
-        onProgress: (progress: DownloadProgress) =>
-          setPhase(prev => (prev.name === 'downloading' ? {...prev, progress, processing: false} : prev)),
-        onProcessing: () =>
-          setPhase(prev => (prev.name === 'downloading' ? {...prev, processing: true} : prev)),
-      }
       try {
-        const ffmpegLocation = await findFfmpeg()
-        const base = {ytdlp: ytdlpRef.current, ffmpegLocation, url, choice, outDir: OUT_DIR}
-        let filepath: string
-        try {
-          // reuse the probe's metadata — starts immediately instead of re-extracting
-          filepath = await download({...base, infoJsonPath: infoJsonRef.current}, handlers, controller.signal)
-        } catch (error) {
-          if (controller.signal.aborted) throw error
-          // media urls in the cached info can expire — retry with a fresh extraction
-          setPhase(prev =>
-            prev.name === 'downloading' ? {...prev, progress: undefined, refreshing: true} : prev,
-          )
-          filepath = await download(base, handlers, controller.signal)
-        }
+        const {path: filepath} = await candidate.fetch(
+          {
+            outDir: OUT_DIR,
+            onProgress: progress =>
+              setPhase(prev => (prev.name === 'downloading' ? {...prev, progress, processing: false} : prev)),
+            onStatus: status =>
+              setPhase(prev =>
+                prev.name === 'downloading' ? {...prev, processing: true, status, progress: undefined} : prev,
+              ),
+          },
+          controller.signal,
+        )
         onOutcome({filepath})
         setHistory(addToHistory(url))
         setPhase({name: 'done', filepath})
@@ -281,6 +303,8 @@ function AppContent({
       }
     })()
   }
+
+  const highlighted = candidates.find(c => c.key === highlightKeyRef.current) ?? candidates[0]
 
   let hints: Array<[string, string]> = [...HINTS[phase.name], ['^t', `theme:${theme.mode}`]]
   if (phase.name === 'input' && history.length > 0) {
@@ -296,7 +320,7 @@ function AppContent({
     if (key === 'esc') return phase.name === 'probing' || phase.name === 'downloading' ? cancelRun : resetToInput
     if (key === '↵') {
       if (phase.name === 'input') return () => handleUrlSubmit(urlInput)
-      if (phase.name === 'picking') return () => handlePick({value: highlightRef.current})
+      if (phase.name === 'picking') return () => handlePick(highlighted)
       if (phase.name === 'error' || phase.name === 'done') return resetToInput
     }
     return undefined // ↑↓ / ↑ stay keyboard-only
@@ -307,8 +331,8 @@ function AppContent({
     clickTargets.push({match: `  ${YOINK_BUTTON}  `, padY: 1, action: () => handleUrlSubmit(urlInput)})
   }
   if (phase.name === 'picking') {
-    for (const [index, choice] of choices.entries()) {
-      clickTargets.push({match: choiceLabel(choice), action: () => handlePick({value: index})})
+    for (const candidate of candidates) {
+      clickTargets.push({match: candidateLabel(candidate), action: () => handlePick(candidate)})
     }
   }
   if (phase.name === 'done') {
@@ -383,7 +407,7 @@ function AppContent({
           <Box flexDirection="column" flexGrow={1} flexBasis={0} paddingTop={1} paddingRight={3}>
             {/* wrapped by hand so continuation lines stay flush left —
                 ink's wrapping keeps the break's space as a 1-cell indent */}
-            {wrapText(info?.title ?? '', Math.max(10, contentWidth - 41)).map((line, index) => (
+            {wrapText(subject.title ?? '', Math.max(10, contentWidth - 41)).map((line, index) => (
               <Text key={index} bold color={theme.primary}>
                 {line}
               </Text>
@@ -391,21 +415,28 @@ function AppContent({
             <Gap />
             <Text color={theme.gray} dimColor={theme.dimSecondary}>
               ▸ {platform.label}
-              {info?.duration ? ` · ${formatDuration(info.duration)}` : ''}
-              {info?.uploader ? ` · ${info.uploader}` : ''}
+              {subject.duration ? ` · ${formatDuration(subject.duration)}` : ''}
+              {subject.uploader ? ` · ${subject.uploader}` : ''}
             </Text>
           </Box>
           <Panel title="Download" width={38}>
             <SelectInput
+              // remount when the candidate set changes so the cursor lands back
+              // on the remembered key rather than drifting with the index
+              key={candidates.map(c => c.key).join('|')}
+              initialIndex={Math.max(
+                0,
+                candidates.findIndex(c => c.key === highlightKeyRef.current),
+              )}
               indicatorComponent={ChoiceIndicator}
               itemComponent={ChoiceItem}
-              items={choices.map((choice, index) => ({
-                key: String(index),
-                label: choiceLabel(choice),
-                value: index,
+              items={candidates.map(candidate => ({
+                key: candidate.key,
+                label: candidateLabel(candidate),
+                value: candidate.key,
               }))}
-              onSelect={handlePick}
-              onHighlight={item => (highlightRef.current = item.value)}
+              onSelect={item => handlePick(candidates.find(c => c.key === item.value))}
+              onHighlight={item => (highlightKeyRef.current = String(item.value))}
             />
           </Panel>
         </Box>
@@ -414,8 +445,8 @@ function AppContent({
       {phase.name === 'downloading' && (
         <Box flexDirection="column" alignItems="center">
           <Text color={theme.gray} dimColor={theme.dimSecondary}>
-            {info?.title ? `${truncate(info.title, 42)} · ` : ''}
-            {phase.choice.label}
+            {subject.title ? `${truncate(subject.title, 42)} · ` : ''}
+            {phase.candidate.label}
           </Text>
           <Gap />
           {/* every branch is exactly three rows — bar, gap, meta — so the layout never jumps */}
@@ -427,7 +458,7 @@ function AppContent({
                 <Text color={theme.primary}>
                   <Spinner type="dots" />
                 </Text>
-                <Text color={theme.gray} dimColor={theme.dimSecondary}> processing…</Text>
+                <Text color={theme.gray} dimColor={theme.dimSecondary}> {phase.status ?? 'processing…'}</Text>
               </Text>
             </>
           ) : phase.progress?.totalBytes ? (
@@ -456,7 +487,7 @@ function AppContent({
                   <Spinner type="dots" />
                 </Text>
                 <Text color={theme.gray} dimColor={theme.dimSecondary}>
-                  {phase.refreshing ? ' link expired — grabbing a fresh one…' : ' starting download…'}
+                  {phase.status ? ` ${phase.status}` : ' starting download…'}
                 </Text>
               </Text>
             </>

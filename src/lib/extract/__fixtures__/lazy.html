@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Kestrel — index</title>
+
+  <!-- twitter declared first on purpose: og still has to win -->
+  <meta name="twitter:image" content="/social/twitter-card.png">
+  <meta property="og:image" content="/social/og-card.png">
+  <meta property="og:image:width" content="20">
+  <meta property="og:image:height" content="20">
+
+  <link rel="preload" as="image" imagesrcset="/hero/wide-1600.avif 1600w, /hero/wide-3200.avif 3200w">
+</head>
+
+<body>
+  <img src="https://px.kestrel.tools/collect?id=7" width="1" height="1" alt="">
+  <img src="/ui/chevron.png" width="8" height="8" alt="">
+  <img src="/ui/logo-lockup.svg" width="140" height="11" alt="Kestrel">
+
+  <img src="/work/thumb-atlas.jpg" width="150" height="150" alt="Atlas, thumbnail">
+  <img src="/work/atlas-hero.jpg" width="400" height="300" alt="Atlas, full bleed">
+  <img src="/work/undeclared.jpg" alt="No width, no height">
+
+  <img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'/%3E"
+       data-src="/work/lazy-loop.jpg" alt="Loop, lazy">
+  <img data-srcset="/work/lazy-960.jpg 960w, /work/lazy-1920.jpg 1920w" alt="Signage, lazy srcset">
+  <img data-lazy-src="/work/lazy-late.jpg" data-original="/work/never-picked.jpg" alt="Kiosk, lazy late">
+  <img data-original="/work/original-only.jpg" alt="Wayfinding, legacy lazy">
+
+  <picture>
+    <source media="(max-width: 32rem)" type="image/webp" srcset="/work/mural-640.webp 640w">
+    <source media="(max-width: 60rem)" type="image/webp" srcset="/work/mural-1200.webp 1200w">
+    <source type="image/webp" srcset="/work/mural-1600.webp 1600w, /work/mural-2400.webp 2400w">
+    <source srcset="/work/mural-1600.jpg 1600w, /work/mural-2400.jpg 2400w">
+    <img src="/work/mural.jpg" width="2400" height="1600" alt="Mural">
+  </picture>
+
+  <picture>
+    <source srcset="/work/kiosk.png">
+    <img src="/work/kiosk.png" alt="Kiosk">
+  </picture>
+
+  <source srcset="/work/stray-1200.webp 1200w, /work/stray-2400.webp 2400w">
+
+  <figure>
+    <picture>
+      <source srcset="/work/orphan-1600.webp 1600w">
+      <img src="/work/orphan.jpg" alt="Orphan">
+    <figcaption>Someone shipped this without a closing tag</figcaption>
+  </figure>
+
+  <img src="/work/after-orphan.jpg" alt="Still found below the mess">
+
+  <video poster="/work/reel-poster.jpg" controls>
+    <source src="/work/reel.mp4" type="video/mp4">
+  </video>
+</body>
+</html>

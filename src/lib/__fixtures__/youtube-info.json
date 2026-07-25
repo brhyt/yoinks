@@ -1,0 +1,87 @@
+{
+  "title": "Never Gonna Give You Up",
+  "uploader": "Rick Astley",
+  "duration": 213,
+  "webpage_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  "extractor_key": "Youtube",
+  "formats": [
+    {
+      "format_id": "251",
+      "ext": "webm",
+      "vcodec": "none",
+      "acodec": "opus",
+      "abr": 130.2,
+      "tbr": 130.2,
+      "filesize": 3500000
+    },
+    {
+      "format_id": "140",
+      "ext": "m4a",
+      "vcodec": "none",
+      "acodec": "mp4a.40.2",
+      "abr": 129.5,
+      "tbr": 129.5,
+      "filesize": 3400000
+    },
+    {
+      "format_id": "137",
+      "ext": "mp4",
+      "vcodec": "avc1.640028",
+      "acodec": "none",
+      "height": 1080,
+      "width": 1920,
+      "tbr": 4000,
+      "filesize": 45000000
+    },
+    {
+      "format_id": "248",
+      "ext": "webm",
+      "vcodec": "vp9",
+      "acodec": "none",
+      "height": 1080,
+      "width": 1920,
+      "tbr": 3500,
+      "filesize": 40000000
+    },
+    {
+      "format_id": "136",
+      "ext": "mp4",
+      "vcodec": "avc1.4d401f",
+      "acodec": "none",
+      "height": 720,
+      "width": 1280,
+      "tbr": 2000,
+      "filesize": 22000000
+    },
+    {
+      "format_id": "22",
+      "ext": "mp4",
+      "vcodec": "avc1.64001F",
+      "acodec": "mp4a.40.2",
+      "height": 720,
+      "width": 1280,
+      "tbr": 2200,
+      "filesize": 25000000
+    },
+    {
+      "format_id": "135",
+      "ext": "mp4",
+      "vcodec": "avc1.4d401e",
+      "acodec": "none",
+      "height": 480,
+      "width": 854,
+      "tbr": 1000,
+      "filesize_approx": 11000000
+    },
+    {
+      "format_id": "18",
+      "ext": "mp4",
+      "vcodec": "avc1.42001E",
+      "acodec": "mp4a.40.2",
+      "height": 360,
+      "width": 640,
+      "tbr": 600,
+      "filesize": 6000000
+    }
+  ]
+}

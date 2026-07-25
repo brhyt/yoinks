@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Studio Mirador — selected work</title>
+
+  <meta property="og:image" content="https://cdn.mirador.studio/og/cover.jpg?w=1200&amp;fit=crop">
+  <meta property="og:image:secure_url" content="https://cdn.mirador.studio/og/cover.jpg?w=1200&amp;fit=crop">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="/static/twitter-card.png">
+  <meta name="description" content="Selected work, 2026 &mdash; branding &amp; interfaces">
+
+  <link rel="preload" as="font" href="/fonts/soehne-buch.woff2" type="font/woff2" crossorigin>
+  <link rel="preload" as="image" href="https://cdn.mirador.studio/hero/poster.avif">
+  <link rel="preload" as="script" href="/assets/app.js">
+  <link rel="image_src" href="/static/legacy-thumb.jpg">
+  <link rel="stylesheet" href="/assets/site.css">
+  <link rel="icon" href="/favicon.ico">
+
+  <style>
+    :root {
+      --ink: #0B0D10;
+      --paper: #E8E6E3;
+      --accent: #ff6b35;
+      --accent-soft: rgba(255, 107, 53, 0.18);
+      --wash: hsl(210 12% 96%);
+      --shadow: #0b0d1033;
+      --measure: 68ch;
+      --font-display: "GT America", sans-serif;
+      --rule: 1px solid var(--ink);
+    }
+
+    @font-face {
+      font-family: 'Söhne';
+      src: url('/fonts/soehne-buch.woff2') format('woff2'),
+           url("/fonts/soehne-buch.woff") format('woff');
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'GT America Mono';
+      src: url(https://cdn.mirador.studio/fonts/gt-america-mono.otf) format('opentype');
+    }
+
+    .hero { background-image: url(/img/grain.png); color: var(--paper); }
+  </style>
+</head>
+
+<body>
+  <main style="--surface:#12151a;--gap:24px">
+    <img src="https://cdn.mirador.studio/og/cover.jpg?w=1200&amp;fit=crop" width="1200" height="800" alt="Cover">
+
+    <img
+      srcset="/work/dashboard-480.webp 480w,
+              /work/dashboard-1024.webp 1024w,
+              /work/dashboard-2048.webp 2048w"
+      sizes="(min-width: 60rem) 50vw, 100vw"
+      src="/work/dashboard-1024.webp"
+      width="2048" height="1280"
+      alt="Analytics dashboard, dark">
+
+    <img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="tracking pixel" width="1" height="1">
+    <img src="blob:https://mirador.studio/9c4f8a-e21" alt="pasted crop">
+
+    <img srcset="/work/poster@1x.png 1x, /work/poster@2x.png 2x" src="/work/poster@1x.png" alt="Poster">
+    <img src="/work/type-specimen.png" width="100%" height="auto" alt="Specimen">
+
+    <img alt="studio wall > the work" src="photos/studio-wall.jpg" width="1600" height="900">
+
+    <!-- <img src="/work/never-shipped.png" alt="cut from the case study"> -->
+  </main>
+</body>
+</html>

@@ -15,7 +15,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "tsx --test src/**/*.test.ts",
+    "test": "tsx --test 'src/**/*.test.ts'",
     "typecheck": "tsc --noEmit",
     "start": "node dist/cli.js",
     "prepublishOnly": "npm test && npm run typecheck && npm run build"
