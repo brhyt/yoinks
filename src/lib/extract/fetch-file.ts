@@ -81,6 +81,7 @@ export async function fetchToFile(url: string, ctx: FetchContext, signal?: Abort
   const response = await fetch(url, {
     signal,
     redirect: 'follow',
+    // `*/*` is right here: this is fetching bytes, not negotiating a document
     headers: {'user-agent': UA, accept: '*/*'},
   })
 

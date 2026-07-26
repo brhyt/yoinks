@@ -104,7 +104,14 @@ async function attempt(
       method,
       signal,
       redirect: 'follow',
-      headers: {'user-agent': UA, accept: '*/*'},
+      headers: {
+        'user-agent': UA,
+        // A real Accept header, because we are asking for a document. Sites
+        // content-negotiate on this, and some return an empty body to
+        // `*/*` — dribbble hands back 0 bytes for it and 2 KB for this.
+        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'accept-language': 'en-US,en;q=0.9',
+      },
     })
   } catch (error) {
     // a cancelled probe is not a server that dislikes HEAD — never retry it

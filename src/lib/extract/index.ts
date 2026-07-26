@@ -49,6 +49,24 @@ type Failure = {extractor: SourceKey; message: string}
 
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error))
 
+/**
+ * Markers of a bot-check interstitial served in place of the page.
+ *
+ * This exists to tell the truth in the error message, not to get around
+ * anything. A challenge page is a site saying "prove you're a browser", and
+ * the honest answer is that pluck isn't one — reporting "nothing pluckable
+ * here" instead would blame the page for the wall in front of it.
+ */
+const CHALLENGE = /awsWafCookieDomainList|gokuProps|cf-browser-verification|challenge-platform|Checking your browser/i
+
+function isBotCheck(classification: Classification): boolean {
+  if (!classification.isHtml) return false
+  const html = classification.html
+  // an html response that carried no body at all is the same wall, quieter
+  if (html === undefined || html.trim() === '') return true
+  return CHALLENGE.test(html)
+}
+
 const safely = <T,>(fn: () => T, fallback: T): T => {
   try {
     return fn()
@@ -185,6 +203,13 @@ export async function* probeUrl(url: string, opts: ProbeOptions = {}): AsyncGene
       // would fill the picker with the site's 404 artwork.
       if (classification.status !== undefined && classification.status >= 400) {
         throw new Error(`That link is dead (${classification.status}).`)
+      }
+
+      if (isBotCheck(classification)) {
+        throw new Error(
+          'That site answered with a bot check instead of the page. ' +
+            'Nothing to read without a browser — open it and save the image directly.',
+        )
       }
 
       const base = safely(() => new URL(classification.url), parsed)

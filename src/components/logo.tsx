@@ -2,10 +2,12 @@ import React, {useEffect, useMemo, useState} from 'react'
 import {Box, Text} from 'ink'
 import {type Theme, useTheme} from '../theme.js'
 
+// Every row must be the same length: the sweep indexes GRID[0].length and
+// leans by row, so a ragged grid throws the beam off the letterforms.
 const ART = [
-  '▓ ▓ █▀█ ▀█▀ █▀▄█ █ █ █▀▀',
-  '▀█▀ █ ▓  ▓  █  ▓ ▓▀▄ ▀▀▓',
-  ' ▀  ▀▀▀ ▀▀▀ ▀  ▀ ▀ ▀ ▀▀▀',
+  '█▀█ █   █ █ █▀▀ █ █',
+  '█▀▀ █   █ █ █   █▀▄',
+  '▀   ▀▀▀ ▀▀▀ ▀▀▀ ▀ ▀',
 ]
 const GRID = ART.map(line => [...line])
 const ROWS = GRID.length
