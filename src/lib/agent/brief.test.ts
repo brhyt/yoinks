@@ -12,7 +12,7 @@ import type {Envelope, ErrorCode} from './json.js'
 /**
  * The fusion and the roles are pure, so they are exercised with hand-built
  * palettes and never touch a disk. Everything below them runs against a
- * throwaway $YOINKS_HOME — never a real ~/.yoinks.
+ * throwaway $PLUCK_HOME — never a real ~/.pluck.
  */
 
 const entry = (hex: string, weight: number): PaletteEntry => ({hex, weight})
@@ -185,14 +185,14 @@ test('assignRoles leaves its input alone', () => {
 // --- library-backed ---------------------------------------------------------
 
 async function withHome(run: (home: string) => Promise<void>): Promise<void> {
-  const previous = process.env.YOINKS_HOME
-  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-brief-'))
-  process.env.YOINKS_HOME = home
+  const previous = process.env.PLUCK_HOME
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-brief-'))
+  process.env.PLUCK_HOME = home
   try {
     await run(home)
   } finally {
-    if (previous === undefined) delete process.env.YOINKS_HOME
-    else process.env.YOINKS_HOME = previous
+    if (previous === undefined) delete process.env.PLUCK_HOME
+    else process.env.PLUCK_HOME = previous
     await fs.rm(home, {recursive: true, force: true})
   }
 }
@@ -340,7 +340,7 @@ test('--no-paths and --no-notes actually omit what they promise to', async () =>
     // and the markdown is rendered from the shaped brief, so it cannot disagree
     const markdown = dataOf<{markdown: string}>(await cmdBrief(['--md', '--no-notes', '--no-paths'])).markdown
     assert.equal(/hairlines/.test(markdown), false)
-    assert.equal(markdown.includes(process.env.YOINKS_HOME!), false)
+    assert.equal(markdown.includes(process.env.PLUCK_HOME!), false)
   })
 })
 

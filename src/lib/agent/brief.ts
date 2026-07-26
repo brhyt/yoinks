@@ -141,7 +141,7 @@ const NEAR_BACKGROUND = 120
  * Label background / surface / text / muted / accent by luminance and chroma.
  *
  * A role is a hint to whoever reads the brief, never a claim about the
- * references: yoinks has seen color statistics, not a layout, so it cannot know
+ * references: pluck has seen color statistics, not a layout, so it cannot know
  * that the heaviest dark color was the page background. Anything the heuristic
  * isn't confident about is left unlabeled rather than guessed at, and a
  * consumer is free to ignore every one of these and use the weights.

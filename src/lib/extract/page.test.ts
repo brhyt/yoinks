@@ -142,7 +142,7 @@ test('every custom property that holds a color lands in one palette candidate', 
   assert.equal(palette.label, 'palette · 7 colors')
   assert.equal(palette.score, 300)
 
-  const outDir = path.join(await fs.promises.mkdtemp(path.join(os.tmpdir(), 'yoinks-page-')), 'colors')
+  const outDir = path.join(await fs.promises.mkdtemp(path.join(os.tmpdir(), 'pluck-page-')), 'colors')
   try {
     const fetched = await palette.fetch({outDir})
     assert.deepEqual(fetched, {

@@ -249,17 +249,17 @@ test('an item always has something to be called', () => {
 
 // --- the store ---------------------------------------------------------------
 
-test('the module never reads the real library — YOINKS_HOME decides where it looks', async () => {
-  const previous = process.env.YOINKS_HOME
-  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-library-'))
-  process.env.YOINKS_HOME = home
+test('the module never reads the real library — PLUCK_HOME decides where it looks', async () => {
+  const previous = process.env.PLUCK_HOME
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-library-'))
+  process.env.PLUCK_HOME = home
   try {
     const {loadItems} = await import('../lib/store/log.js')
     assert.deepEqual(await loadItems(), [])
     assert.deepEqual(boardCounts(await loadItems()), [])
   } finally {
-    if (previous === undefined) delete process.env.YOINKS_HOME
-    else process.env.YOINKS_HOME = previous
+    if (previous === undefined) delete process.env.PLUCK_HOME
+    else process.env.PLUCK_HOME = previous
     await fs.rm(home, {recursive: true, force: true})
   }
 })

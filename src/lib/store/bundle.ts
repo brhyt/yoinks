@@ -14,7 +14,7 @@ import {scoreItem, type Filters} from './query.js'
 import {isoNow, type LogRecord} from './types.js'
 
 /**
- * The `.yoink` bundle — the manual half of sync.
+ * The `.pluck` bundle — the manual half of sync.
  *
  * A gzipped tar holding a manifest, the exported records, and the blobs those
  * records reference. Import replays them through the same last-write-wins and
@@ -24,7 +24,7 @@ import {isoNow, type LogRecord} from './types.js'
  *
  * The tar is hand-rolled rather than a dependency. A bundle needs one narrow
  * slice of ustar — regular files, short names, one header block each — and
- * writing it costs less than a package while keeping `tar tzf hero-refs.yoink`
+ * writing it costs less than a package while keeping `tar tzf hero-refs.pluck`
  * working on any machine.
  *
  * See docs/asset-model.md#export-bundle.
@@ -48,7 +48,7 @@ const ORIGINAL = /^original(\.[a-z0-9]{1,8})?$/i
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error))
 
 const corrupt = (detail: string): CommandError =>
-  new CommandError('store_error', `That doesn’t read as a .yoink bundle — ${detail}.`)
+  new CommandError('store_error', `That doesn’t read as a .pluck bundle — ${detail}.`)
 
 const truncated = (): CommandError =>
   new CommandError('store_error', 'That bundle is cut short — the file is incomplete or corrupt.')
@@ -493,7 +493,7 @@ export async function importBundle(
 
       // boards.json doesn't travel in the bundle, so recreate any board the
       // imported items claim membership of. Without this, sharing a board —
-      // the whole point of a bundle — lands the items but leaves `yoinks
+      // the whole point of a bundle — lands the items but leaves `pluck
       // boards` empty, and the board is invisible to everything that lists
       // them. Existing boards are untouched: ensureBoard is idempotent.
       const boards = new Set<string>()
@@ -508,7 +508,7 @@ export async function importBundle(
     for (const {temp} of staged) await fs.rm(temp, {force: true})
     reader.stop()
     if (error instanceof CommandError) throw error
-    throw new CommandError('store_error', `That file isn’t a readable .yoink bundle — ${messageOf(error)}`)
+    throw new CommandError('store_error', `That file isn’t a readable .pluck bundle — ${messageOf(error)}`)
   } finally {
     if (stagingDir) await fs.rm(stagingDir, {recursive: true, force: true})
   }
@@ -530,7 +530,7 @@ function parseManifest(body: Buffer): Manifest {
   if (format > FORMAT) {
     throw new CommandError(
       'unsupported',
-      `That bundle is format ${format} and this yoinks reads up to ${FORMAT}. Upgrade to open it.`,
+      `That bundle is format ${format} and this pluck reads up to ${FORMAT}. Upgrade to open it.`,
     )
   }
   if (typeof items !== 'number' || typeof blobs !== 'number') throw corrupt('its manifest has no counts')
@@ -713,8 +713,8 @@ async function guard<T>(run: () => Promise<T>): Promise<Envelope<T>> {
 }
 
 /**
- * Without `--out` the bundle goes to stdout, so `yoinks export --board x >
- * x.yoink` works. The envelope this returns is then the caller's problem: it
+ * Without `--out` the bundle goes to stdout, so `pluck export --board x >
+ * x.pluck` works. The envelope this returns is then the caller's problem: it
  * must not print it to the same stream the bytes just went down.
  */
 export async function cmdExport(args: string[]): Promise<Envelope<unknown>> {
@@ -761,7 +761,7 @@ export async function cmdImport(args: string[]): Promise<Envelope<unknown>> {
   return guard(async () => {
     const flags = parseFlags(args, {boolean: ['dry-run']})
     const [file, ...extra] = flags.positional
-    if (!file) throw new CommandError('usage', 'yoinks import <bundle.yoink> — a bundle is required')
+    if (!file) throw new CommandError('usage', 'pluck import <bundle.pluck> — a bundle is required')
     if (extra.length) throw new CommandError('usage', 'import takes a single bundle')
 
     let stat

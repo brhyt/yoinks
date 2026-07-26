@@ -9,7 +9,7 @@ Published today: **0.3.1** — video capture only. M1–M5 are built on the
 
 - Video and audio capture via yt-dlp, 1,800+ sites
 - Resolution picker with estimated file sizes, audio-only mp3
-- Standalone yt-dlp bootstrap to `~/.yoinks/bin` — no Python
+- Standalone yt-dlp bootstrap to `~/.pluck/bin` — no Python
 - ffmpeg resolution: `PATH`, then bundled `ffmpeg-static`
 - Full-screen Ink UI on the alternate screen, scrollback restored on exit
 - Terminal-aware `auto` / `light` / `dark` themes, `^t` to cycle
@@ -31,8 +31,8 @@ The refactor that makes everything else possible. **No visible change.**
 - [x] Fan-out with tiering, streaming merge, stable ordering
 - [x] Picker cursor tracks candidate key, not index
 
-**Done when:** `yoinks <youtube-url>` is indistinguishable from 0.3.1, and
-`yoinks <dribbble-url>` lists images in the picker.
+**Done when:** `pluck <youtube-url>` is indistinguishable from 0.3.1, and
+`pluck <dribbble-url>` lists images in the picker.
 
 `page` ended up with **zero** dependencies — the html parsing is hand-rolled
 string scanning with quote tracking, since `<img[^>]*>` breaks on attribute
@@ -43,7 +43,7 @@ values containing `>`. Response size and redirect depth are capped in
 
 Capture stops being a download.
 
-- [x] `$YOINKS_HOME` resolution, legacy-path fallback
+- [x] `$PLUCK_HOME` resolution, legacy-path fallback
 - [x] Content-addressed blob store
 - [x] `items.jsonl` append + replay + tombstones
 - [x] Ingest: hash → dedupe → blob + item
@@ -65,7 +65,7 @@ before M4 exists.
 
 - [x] ffmpeg → raw rgb24 decode pipe
 - [x] Half-block renderer, truecolor + 256-color fallback
-- [x] Capability detection, `yoinks doctor`
+- [x] Capability detection, `pluck doctor`
 - [x] Thumbnail cache, warmed at ingest
 - [x] Rect click targets in `click-map.ts`
 - [x] `library` phase — grid, `/` search, multi-select
@@ -79,7 +79,7 @@ before M4 exists.
 - [x] Non-TTY auto-detection
 - [x] `capture`, `find`, `show`, `boards`, `tag`, `mv`, `note`, `rm`
 - [x] `find --color` nearest-palette ranking
-- [x] Store and query tests against a temp `YOINKS_HOME`
+- [x] Store and query tests against a temp `PLUCK_HOME`
 
 ## M5 — Agents ✅
 
@@ -87,8 +87,8 @@ The reason for all of it.
 
 - [x] `brief` — palette fusion, roles, type ranking, notes, paths
 - [x] `brief --md`, `--no-paths`, `--no-notes`
-- [x] `SKILL.md` + `yoinks skill install` / `print`
-- [x] `yoinks mcp` — search, brief, get, list_boards, capture
+- [x] `SKILL.md` + `pluck skill install` / `print`
+- [x] `pluck mcp` — search, brief, get, list_boards, capture
 - [x] Docs pass against the real implementation
 
 ## M6 — Portable 🚧
@@ -130,7 +130,7 @@ Not scheduled, roughly in order of how often they'll get asked for.
 
 | | |
 |---|---|
-| **Name** | `yoinks` may not survive the scope change. Docs use it as one token; a rename is find/replace plus the home-directory fallback in [asset-model.md](asset-model.md#home-directory). |
+| **Name** | `pluck` may not survive the scope change. Docs use it as one token; a rename is find/replace plus the home-directory fallback in [asset-model.md](asset-model.md#home-directory). |
 | **Tagline** | Unwritten. The old line is too narrow. |
 | **`~/Downloads`** | v1.0 keeps writing video there *and* to the library, since that's what current users installed the tool for. Revisit once the library is real. |
 | **Sixel** | Deferred, possibly permanently. |
@@ -142,7 +142,7 @@ Worth restating whenever a decision gets hard:
 1. **Don't break the shipped product.** People installed a video downloader.
    It keeps working, exactly, forever.
 2. **The library is plain files.** Greppable, backup-able, rebuildable. No
-   database, no lock-in, no format only yoinks can read.
+   database, no lock-in, no format only pluck can read.
 3. **Derivation never blocks capture.** Missing ffmpeg costs you a
    thumbnail, not the asset.
 4. **Local by default.** No account, no telemetry. The only egress is what

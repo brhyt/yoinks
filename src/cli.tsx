@@ -12,16 +12,16 @@ import {isProbablyUrl} from './lib/platforms.js'
 const VERSION: string = createRequire(import.meta.url)('../package.json').version
 
 const HELP = `
-  yoinks — yoink any video. paste. yoink. done.
+  pluck — pluck anything. paste. pluck. done.
 
   Usage
-    $ yoinks [url]
-    $ yoinks <command>
+    $ pluck [url]
+    $ pluck <command>
 
   Examples
-    $ yoinks https://youtu.be/dQw4w9WgXcQ
-    $ yoinks https://dribbble.com/shots/…
-    $ yoinks                 (prompts for a url)
+    $ pluck https://youtu.be/dQw4w9WgXcQ
+    $ pluck https://dribbble.com/shots/…
+    $ pluck                 (prompts for a url)
 
   Commands
     lib [query]         browse your library
@@ -42,15 +42,16 @@ const HELP = `
     -h, --help      show this help
     -v, --version   show version
 
-  Captures land in your library (~/.yoinks). Video and audio are also
+  Captures land in your library (~/.pluck). Video and audio are also
   saved to ~/Downloads.
-  Powered by yt-dlp — YouTube, X, Instagram, Threads, TikTok & 1800+ sites.
+  Images, video, fonts and palettes from any page.
+  Video powered by yt-dlp — YouTube, X, Instagram, TikTok & 1800+ sites.
 `
 
 const args = parseArgs(process.argv.slice(2))
 
 if (args.error) {
-  console.error(`yoinks: ${args.error}\nTry “yoinks --help” for usage.`)
+  console.error(`pluck: ${args.error}\nTry “pluck --help” for usage.`)
   process.exit(1)
 }
 
@@ -89,7 +90,7 @@ if (args.command && args.command !== 'lib') {
   const {envelopeFor, exitCodeFor, render, wantsJson} = await import('./lib/agent/json.js')
   type Envelope<T> = import('./lib/agent/json.js').Envelope<T>
 
-  // verbs that live outside commands.ts, kept lazy so a `yoinks <url>` run
+  // verbs that live outside commands.ts, kept lazy so a `pluck <url>` run
   // never pays to load the agent surface or the bundle codec
   const extra: Record<string, () => Promise<(a: string[]) => Promise<Envelope<unknown>>>> = {
     brief: async () => (await import('./lib/agent/brief.js')).cmdBrief,
@@ -109,7 +110,7 @@ if (args.command && args.command !== 'lib') {
       envelope = envelopeFor(error)
     }
     const out = asJson ? render(envelope) : renderHuman(args.command, envelope)
-    // `yoinks export > file.yoink` streams the bundle itself to stdout, so the
+    // `pluck export > file.pluck` streams the bundle itself to stdout, so the
     // envelope has to go to stderr or it lands inside the tar and corrupts it
     const ownsStdout = args.command === 'export' && !args.commandArgs.includes('--out')
     if (envelope.ok && !ownsStdout) console.log(out)
@@ -166,5 +167,5 @@ await waitUntilExit()
 
 if (isTTY) leaveAltScreen()
 if (outcome.filepath) {
-  console.log(`✓ yoinked → ${outcome.filepath}`)
+  console.log(`✓ plucked → ${outcome.filepath}`)
 }

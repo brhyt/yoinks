@@ -80,7 +80,7 @@ function requireHttpUrl(input: string): URL {
   }
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
     const scheme = parsed.protocol.replace(':', '')
-    throw new Error(`That doesn’t look like a link — yoinks opens http and https urls, not ${scheme}.`)
+    throw new Error(`That doesn’t look like a link — pluck opens http and https urls, not ${scheme}.`)
   }
   return parsed
 }

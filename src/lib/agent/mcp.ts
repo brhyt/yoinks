@@ -137,7 +137,7 @@ export async function handleRequest(request: JsonRpcRequest): Promise<object | u
       return result(id, {
         protocolVersion: PROTOCOL_VERSION,
         capabilities: {tools: {}},
-        serverInfo: {name: 'yoinks', version: version()},
+        serverInfo: {name: 'pluck', version: version()},
       })
     case 'tools/list':
       return result(id, {tools: TOOLS})

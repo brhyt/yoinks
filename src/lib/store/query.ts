@@ -4,7 +4,7 @@ import {blobMetaPath, findOriginal} from './paths.js'
 import type {BlobMeta, Item, Kind} from './types.js'
 
 /**
- * Library search — what `yoinks find` and the MCP `search_inspiration` tool
+ * Library search — what `pluck find` and the MCP `search_inspiration` tool
  * both call.
  *
  * Filters are AND across kinds and OR within one: `--tag a --tag b --kind
@@ -12,7 +12,7 @@ import type {BlobMeta, Item, Kind} from './types.js'
  * the way people say it out loud, and it's what every search box they already
  * know does.
  *
- * See docs/cli.md#yoinks-find-query.
+ * See docs/cli.md#pluck-find-query.
  */
 
 export type Filters = {

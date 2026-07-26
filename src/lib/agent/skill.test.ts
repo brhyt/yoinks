@@ -9,7 +9,7 @@ import type {Envelope, ErrorCode} from './json.js'
 
 /** Every install lands in a throwaway directory — never a real ~/.claude/skills. */
 async function withDir(run: (dir: string) => Promise<void>): Promise<void> {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-skill-'))
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-skill-'))
   try {
     await run(dir)
   } finally {

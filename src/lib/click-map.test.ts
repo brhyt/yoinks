@@ -39,8 +39,8 @@ test('rectangles need no frame text — a grid of identical cells still resolves
 })
 
 test('text targets still work alongside rectangles', () => {
-  paint(['', '   yoink here', ''])
-  const text: ClickTarget = {match: 'yoink here', action: () => {}}
+  paint(['', '   pluck here', ''])
+  const text: ClickTarget = {match: 'pluck here', action: () => {}}
   const rect: ClickTarget = {rect: [1, 3, 5, 1], action: () => {}}
 
   assert.equal(hit([text, rect], 5, 2), text)
@@ -70,8 +70,8 @@ test('padX widens a text target, padY reaches the rows around it', () => {
 })
 
 test('colors are stripped before matching', () => {
-  paint(['[38;2;255;0;0m  yoink  [0m'])
-  const target: ClickTarget = {match: 'yoink', action: () => {}}
+  paint(['[38;2;255;0;0m  pluck  [0m'])
+  const target: ClickTarget = {match: 'pluck', action: () => {}}
   assert.equal(hit([target], 4, 1), target)
 })
 

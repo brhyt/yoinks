@@ -3,7 +3,7 @@
  *
  * One paste fans out across every extractor that matches the url, and their
  * candidates merge into a single picker. Extractors never talk to each other
- * and never touch the store — they turn a url into things you could yoink,
+ * and never touch the store — they turn a url into things you could pluck,
  * and nothing else.
  *
  * See docs/architecture.md for the pipeline this sits in.

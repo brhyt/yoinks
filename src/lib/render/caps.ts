@@ -7,11 +7,11 @@ import path from 'node:path'
 import {resolveFfmpeg} from '../ffmpeg.js'
 import {formatBytes, shortenPath} from '../format.js'
 import {loadItems} from '../store/log.js'
-import {binDir, blobsDir, yoinksHome} from '../store/paths.js'
+import {binDir, blobsDir, pluckHome} from '../store/paths.js'
 import type {Caps, Protocol} from './types.js'
 
 /**
- * What this terminal can draw, and what `yoinks doctor` reports.
+ * What this terminal can draw, and what `pluck doctor` reports.
  *
  * Detection is one pure function over an environment object. There is no
  * query-the-terminal handshake anywhere in here on purpose: every protocol
@@ -19,7 +19,7 @@ import type {Caps, Protocol} from './types.js'
  * tmux pane or an ssh session, and getting it wrong hangs the app before it has
  * drawn a frame. Environment variables are a weaker signal that is always
  * instant, never blocks, and is trivially testable — and when it guesses wrong,
- * `YOINKS_GRAPHICS` is one word in a shell profile.
+ * `PLUCK_GRAPHICS` is one word in a shell profile.
  *
  * See docs/rendering.md#detection.
  */
@@ -40,12 +40,12 @@ export function detectCaps(env: NodeJS.ProcessEnv = process.env): Caps {
     reason,
   })
 
-  const forced = env.YOINKS_GRAPHICS?.trim().toLowerCase()
+  const forced = env.PLUCK_GRAPHICS?.trim().toLowerCase()
   // sixel is deferred (docs/rendering.md#sixel). Quietly honoring the request as
   // blocks without saying so is how somebody spends an evening wondering why
   // their sixel terminal looks like everyone else's.
-  if (forced === 'sixel') return caps('blocks', 'YOINKS_GRAPHICS=sixel — sixel is not implemented, using blocks')
-  if (forced && isProtocol(forced)) return caps(forced, `YOINKS_GRAPHICS=${forced}`)
+  if (forced === 'sixel') return caps('blocks', 'PLUCK_GRAPHICS=sixel — sixel is not implemented, using blocks')
+  if (forced && isProtocol(forced)) return caps(forced, `PLUCK_GRAPHICS=${forced}`)
   // anything else falls through to detection rather than failing: a typo in a
   // shell profile should not cost you thumbnails
 
@@ -61,7 +61,7 @@ export function detectCaps(env: NodeJS.ProcessEnv = process.env): Caps {
 
   // Over ssh TERM survives but TERM_PROGRAM usually does not, so kitty and
   // ghostty still detect below via TERM/KITTY_WINDOW_ID while iTerm2 falls back
-  // to blocks. That's acceptable, and YOINKS_GRAPHICS=iterm is the override.
+  // to blocks. That's acceptable, and PLUCK_GRAPHICS=iterm is the override.
   const program = env.TERM_PROGRAM ?? ''
   if (program === 'iTerm.app') return caps('iterm', 'TERM_PROGRAM=iTerm.app')
   if (program === 'ghostty' || program === 'WezTerm') return caps('kitty', `TERM_PROGRAM=${program}`)
@@ -72,7 +72,7 @@ export function detectCaps(env: NodeJS.ProcessEnv = process.env): Caps {
 }
 
 export type DoctorReport = {
-  versions: {yoinks: string; node: string; ytdlp?: string; ffmpeg?: string}
+  versions: {pluck: string; node: string; ytdlp?: string; ffmpeg?: string}
   caps: Caps
   home: string
   library: {items: number; blobs: number; bytes: number}
@@ -82,13 +82,13 @@ export async function doctor(): Promise<DoctorReport> {
   const [ytdlp, ffmpeg, library] = await Promise.all([ytdlpVersion(), ffmpegVersion(), scanLibrary()])
   return {
     versions: {
-      yoinks: yoinksVersion(),
+      pluck: pluckVersion(),
       node: process.version.replace(/^v/, ''),
       ytdlp,
       ffmpeg,
     },
     caps: detectCaps(),
-    home: yoinksHome(),
+    home: pluckHome(),
     library,
   }
 }
@@ -99,7 +99,7 @@ export async function doctor(): Promise<DoctorReport> {
  * and is bundled into `dist/cli.js` one deep — either fixed depth is wrong in
  * one of the two.
  */
-function yoinksVersion(): string {
+function pluckVersion(): string {
   const load = createRequire(import.meta.url)
   let specifier = '../package.json'
   for (let up = 0; up < 5; up++) {
@@ -210,7 +210,7 @@ export function formatDoctor(report: DoctorReport): string {
   const count = (n: number) => n.toLocaleString('en-US')
 
   return [
-    row('yoinks', versions.yoinks),
+    row('pluck', versions.pluck),
     row('node', versions.node),
     versions.ytdlp ? row('yt-dlp', versions.ytdlp) : row('yt-dlp', 'not found', 'captures from video sites need it'),
     versions.ffmpeg

@@ -6,7 +6,7 @@ import {buildChoices, type VideoInfo} from './ytdlp.js'
 /**
  * Regression lock on shipped video capture.
  *
- * People installed yoinks to download videos. As the extractor registry grows
+ * People installed pluck to download videos. As the extractor registry grows
  * around it, these labels and args are the contract that must not drift — a
  * change here means the picker a 0.3.1 user knows has silently moved under
  * them. If this test fails and the change was deliberate, update the literals

@@ -73,7 +73,7 @@ test('a tiny accent survives the cull that drops an equally tiny grey', () => {
 test('flat-colour art yields only colours that are actually in it', () => {
   // logos, ui screenshots and vector work are mostly flat colour, and cutting at
   // the median index used to average across a boundary and invent a blend — this
-  // buffer reported a #cc0033 that is in none of its pixels. `yoinks brief`
+  // buffer reported a #cc0033 that is in none of its pixels. `pluck brief`
   // hands these hexes to an agent as the reference's own colours, so an invented
   // one is worse than a missing one.
   const palette = paletteFromRgb(rgbBuffer([[255, 0, 0, 600], [0, 255, 0, 300], [0, 0, 255, 100]]))
@@ -153,19 +153,19 @@ test('an empty buffer has no palette', () => {
 })
 
 test('a decode that never happened is undefined, not a throw', async () => {
-  assert.equal(await decodeRgb(path.join(os.tmpdir(), 'yoinks-nothing-here.png'), 8, 8), undefined)
-  assert.equal(await decodeRgb(path.join(os.tmpdir(), 'yoinks-nothing-here.png'), 0, 0), undefined)
-  assert.deepEqual(await probeDimensions(path.join(os.tmpdir(), 'yoinks-nothing-here.png')), {})
+  assert.equal(await decodeRgb(path.join(os.tmpdir(), 'pluck-nothing-here.png'), 8, 8), undefined)
+  assert.equal(await decodeRgb(path.join(os.tmpdir(), 'pluck-nothing-here.png'), 0, 0), undefined)
+  assert.deepEqual(await probeDimensions(path.join(os.tmpdir(), 'pluck-nothing-here.png')), {})
 })
 
 /** A library home for one test, restored afterwards. */
 async function freshHome(t: TestContext): Promise<string> {
-  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-derive-'))
-  const previous = process.env.YOINKS_HOME
-  process.env.YOINKS_HOME = home
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-derive-'))
+  const previous = process.env.PLUCK_HOME
+  process.env.PLUCK_HOME = home
   t.after(async () => {
-    if (previous === undefined) delete process.env.YOINKS_HOME
-    else process.env.YOINKS_HOME = previous
+    if (previous === undefined) delete process.env.PLUCK_HOME
+    else process.env.PLUCK_HOME = previous
     await fs.rm(home, {recursive: true, force: true})
   })
   return home
@@ -226,7 +226,7 @@ test('decoding pads to exactly the requested pixel count', async t => {
   const ffmpeg = await resolveFfmpeg()
   if (!ffmpeg) return t.skip('no ffmpeg on this machine')
 
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-decode-'))
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-decode-'))
   t.after(() => fs.rm(dir, {recursive: true, force: true}))
   const image = path.join(dir, 'wide.png')
   const args = ['-v', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=red:s=120x20', '-frames:v', '1', image]
@@ -266,7 +266,7 @@ test('a clip shorter than the one-second seek still yields a frame', async t => 
   const ffmpeg = await resolveFfmpeg()
   if (!ffmpeg) return t.skip('no ffmpeg on this machine')
 
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-decode-'))
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-decode-'))
   t.after(() => fs.rm(dir, {recursive: true, force: true}))
   const clip = path.join(dir, 'blink.mp4')
   await ffmpegRaw(ffmpeg, [
@@ -281,7 +281,7 @@ test('a wide image gets no black from letterboxing', async t => {
   const ffmpeg = await resolveFfmpeg()
   if (!ffmpeg) return t.skip('no ffmpeg on this machine')
 
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-fit-'))
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-fit-'))
   try {
     const wide = path.join(dir, 'wide.png')
     // 6:1, the shape a banner or a hero screenshot actually is

@@ -25,9 +25,9 @@ import {LibraryScreen} from './components/library.js'
 import fs from 'node:fs/promises'
 
 const OUT_DIR = path.join(os.homedir(), 'Downloads')
-const YOINK_BUTTON = 'yoink'
-const DONE_LABEL = '↵ yoink another'
-const TAGLINE = 'yoink any video. paste. yoink. done.'
+const PLUCK_BUTTON = 'pluck'
+const DONE_LABEL = '↵ pluck another'
+const TAGLINE = 'pluck anything. paste. pluck. done.'
 
 // video and audio keep the glyphs 0.3.1 shipped — a youtube url must look
 // exactly as it always has
@@ -132,7 +132,7 @@ const HINTS: Record<Phase['name'], Array<[string, string]>> = {
     ['^c', 'quit'],
   ],
   input: [
-    ['↵', 'yoink'],
+    ['↵', 'pluck'],
     ['l', 'library'],
     ['^c', 'quit'],
   ],
@@ -142,7 +142,7 @@ const HINTS: Record<Phase['name'], Array<[string, string]>> = {
   ],
   picking: [
     ['↑↓', 'choose'],
-    ['↵', 'yoink'],
+    ['↵', 'pluck'],
     ['esc', 'back'],
     ['^c', 'quit'],
   ],
@@ -161,7 +161,7 @@ type AppProps = {
   initialUrl?: string
   clipboardUrl?: string
   initialThemeMode?: ThemeMode
-  /** start in the library rather than at the paste box (`yoinks lib`) */
+  /** start in the library rather than at the paste box (`pluck lib`) */
   startInLibrary?: boolean
   onOutcome: (outcome: Outcome) => void
 }
@@ -247,7 +247,7 @@ function AppContent({
           setPhase(prev => (prev.name === 'probing' ? {name: 'picking'} : prev))
         } else if (event.type === 'done') {
           if (event.candidates.length === 0) {
-            setPhase({name: 'error', message: 'Nothing yoinkable at that link.'})
+            setPhase({name: 'error', message: 'Nothing pluckable at that link.'})
           }
         }
       }
@@ -318,7 +318,7 @@ function AppContent({
       // installed a video downloader for. Everything else goes straight to the
       // library rather than cluttering the folder.
       const keepsFile = candidate.kind === 'video' || candidate.kind === 'audio'
-      const outDir = keepsFile ? OUT_DIR : path.join(os.tmpdir(), `yoinks-${process.pid}`)
+      const outDir = keepsFile ? OUT_DIR : path.join(os.tmpdir(), `pluck-${process.pid}`)
 
       try {
         const fetched = await candidate.fetch(
@@ -391,7 +391,7 @@ function AppContent({
   const clickTargets: ClickTarget[] = []
   if (phase.name === 'input') {
     // the frame button rows above/below the label are part of the button
-    clickTargets.push({match: `  ${YOINK_BUTTON}  `, padY: 1, action: () => handleUrlSubmit(urlInput)})
+    clickTargets.push({match: `  ${PLUCK_BUTTON}  `, padY: 1, action: () => handleUrlSubmit(urlInput)})
   }
   if (phase.name === 'picking') {
     for (const candidate of candidates) {
@@ -448,12 +448,12 @@ function AppContent({
       <Logo />
       <Gap />
       <Text color={theme.primary}>{TAGLINE}</Text>
-      <Text color={theme.gray} dimColor={theme.dimSecondary}>youtube · x · instagram · threads · tiktok · +1800 more</Text>
+      <Text color={theme.gray} dimColor={theme.dimSecondary}>images · video · fonts · palettes · from any page</Text>
       <Gap />
 
       {phase.name === 'input' && (
         <Box flexDirection="column" alignItems="center">
-          <FramedInput title="Paste a link" width={boxWidth} button={YOINK_BUTTON}>
+          <FramedInput title="Paste a link" width={boxWidth} button={PLUCK_BUTTON}>
             <TextInput
               value={urlInput}
               onChange={setUrlInput}
@@ -472,14 +472,14 @@ function AppContent({
           ) : clipboardOffered ? (
             <Text color={theme.gray} dimColor={theme.dimSecondary}>link in your clipboard — ⇥ to paste it</Text>
           ) : clipboardAccepted ? (
-            <Text color={theme.gray} dimColor={theme.dimSecondary}>from your clipboard — ↵ to yoink it</Text>
+            <Text color={theme.gray} dimColor={theme.dimSecondary}>from your clipboard — ↵ to pluck it</Text>
           ) : null}
         </Box>
       )}
 
       {phase.name === 'probing' && (
         <Box flexDirection="column" alignItems="center">
-          <FramedInput title={platform ? platform.label : 'Paste a link'} width={boxWidth} button={YOINK_BUTTON} buttonDim>
+          <FramedInput title={platform ? platform.label : 'Paste a link'} width={boxWidth} button={PLUCK_BUTTON} buttonDim>
             <Text color={theme.gray} dimColor={theme.dimSecondary}>{url.length > boxWidth - 8 ? `${url.slice(0, boxWidth - 9)}…` : url}</Text>
           </FramedInput>
         </Box>
@@ -581,7 +581,7 @@ function AppContent({
       {phase.name === 'done' && (
         <Box flexDirection="column" alignItems="center">
           <Text>
-            <Text bold color={theme.primary}>✓ yoinked! </Text>
+            <Text bold color={theme.primary}>✓ plucked! </Text>
             <Text color={theme.primary}>find your file in:</Text>
           </Text>
           <Text color={theme.gray} dimColor={theme.dimSecondary}>{shortenPath(phase.filepath, os.homedir(), 60)}</Text>

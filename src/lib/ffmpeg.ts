@@ -8,7 +8,7 @@ import {spawn} from 'node:child_process'
  * palette pass need something they can actually spawn, so this is its sibling.
  *
  * ffmpeg is the whole image toolchain here: it decodes png/jpeg/webp/gif/avif,
- * resizes, and grabs video frames, which is why yoinks has no native image
+ * resizes, and grabs video frames, which is why pluck has no native image
  * dependency. When it's missing, callers degrade to a placeholder rather than
  * failing — browsing your own library must never hard-depend on a media
  * toolchain.

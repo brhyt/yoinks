@@ -15,16 +15,16 @@ import {handleRequest, serveMcp, TOOLS, type JsonRpcRequest} from './mcp.js'
  * is a claim about the framing and cannot be made anywhere else.
  */
 
-/** Every test that reads the library runs against a throwaway $YOINKS_HOME. */
+/** Every test that reads the library runs against a throwaway $PLUCK_HOME. */
 async function withHome(run: (home: string) => Promise<void>): Promise<void> {
-  const previous = process.env.YOINKS_HOME
-  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-mcp-'))
-  process.env.YOINKS_HOME = home
+  const previous = process.env.PLUCK_HOME
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-mcp-'))
+  process.env.PLUCK_HOME = home
   try {
     await run(home)
   } finally {
-    if (previous === undefined) delete process.env.YOINKS_HOME
-    else process.env.YOINKS_HOME = previous
+    if (previous === undefined) delete process.env.PLUCK_HOME
+    else process.env.PLUCK_HOME = previous
     await fs.rm(home, {recursive: true, force: true})
   }
 }
@@ -90,7 +90,7 @@ test('initialize answers the handshake with a protocol version and who we are', 
 
   assert.equal(result.protocolVersion, '2024-11-05')
   assert.deepEqual(result.capabilities, {tools: {}})
-  assert.equal(result.serverInfo.name, 'yoinks')
+  assert.equal(result.serverInfo.name, 'pluck')
   assert.match(result.serverInfo.version, /^\d+\.\d+\.\d+/)
 })
 

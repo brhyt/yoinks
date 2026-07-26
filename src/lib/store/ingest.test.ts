@@ -9,18 +9,18 @@ import {loadItems} from './log.js'
 import {blobDir, blobsDir, boardsPath, cacheDir, findOriginal} from './paths.js'
 
 /**
- * Every test runs against a throwaway $YOINKS_HOME. Nothing here may look at,
+ * Every test runs against a throwaway $PLUCK_HOME. Nothing here may look at,
  * let alone write to, the developer's real library.
  */
 async function withHome(run: (home: string) => Promise<void>): Promise<void> {
-  const before = process.env.YOINKS_HOME
-  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-ingest-'))
-  process.env.YOINKS_HOME = home
+  const before = process.env.PLUCK_HOME
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-ingest-'))
+  process.env.PLUCK_HOME = home
   try {
     await run(home)
   } finally {
-    if (before === undefined) delete process.env.YOINKS_HOME
-    else process.env.YOINKS_HOME = before
+    if (before === undefined) delete process.env.PLUCK_HOME
+    else process.env.PLUCK_HOME = before
     await fs.rm(home, {recursive: true, force: true})
   }
 }
@@ -207,7 +207,7 @@ test('boards and tags default to empty arrays', async () => {
 
 test('an input path that is missing or is not a file is a clear error', async () => {
   await withHome(async home => {
-    await assert.rejects(ingest(capture(path.join(home, 'nope.png'))), /Nothing to yoink/)
+    await assert.rejects(ingest(capture(path.join(home, 'nope.png'))), /Nothing to pluck/)
     await assert.rejects(ingest(capture(home)), /not a file/)
     assert.equal((await loadItems()).length, 0)
   })

@@ -10,8 +10,8 @@ import {clearThumbs, evictThumb, thumbRgb} from './thumb.js'
 import {cellHeightFor} from './types.js'
 
 /**
- * Every test runs in its own YOINKS_HOME, because these functions delete cache
- * trees and a test that reached the real `~/.yoinks` would be deleting somebody's
+ * Every test runs in its own PLUCK_HOME, because these functions delete cache
+ * trees and a test that reached the real `~/.pluck` would be deleting somebody's
  * library. Anything needing ffmpeg skips, so a machine without it still passes —
  * the same rule the thumbnailer itself lives by.
  */
@@ -20,12 +20,12 @@ const SHA = 'a1'.repeat(32)
 const OTHER = 'b2'.repeat(32)
 
 async function freshHome(t: TestContext): Promise<string> {
-  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-thumb-'))
-  const previous = process.env.YOINKS_HOME
-  process.env.YOINKS_HOME = home
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-thumb-'))
+  const previous = process.env.PLUCK_HOME
+  process.env.PLUCK_HOME = home
   t.after(async () => {
-    if (previous === undefined) delete process.env.YOINKS_HOME
-    else process.env.YOINKS_HOME = previous
+    if (previous === undefined) delete process.env.PLUCK_HOME
+    else process.env.PLUCK_HOME = previous
     await fs.rm(home, {recursive: true, force: true})
   })
   return home

@@ -3,7 +3,7 @@
 > Target state for v1.0. Status: ⬜ planned throughout — none of this exists in 0.3.1.
 
 A moodboard that shows you filenames is not a moodboard. This document is
-how yoinks puts actual pixels in a terminal, everywhere, without a native
+how pluck puts actual pixels in a terminal, everywhere, without a native
 dependency.
 
 ## Two paths
@@ -130,12 +130,12 @@ part of Ink's diffable output. The detail view therefore:
 3. re-writes on every frame where the box's geometry or the image changed.
 
 Everything about that is more fragile than half-blocks. It's confined to one
-screen for exactly that reason, and `YOINKS_GRAPHICS=blocks` turns it off.
+screen for exactly that reason, and `PLUCK_GRAPHICS=blocks` turns it off.
 
 ## Detection
 
 ```
-YOINKS_GRAPHICS  set?          → obey it, no detection
+PLUCK_GRAPHICS  set?          → obey it, no detection
 TERM_PROGRAM = iTerm.app       → iterm
 TERM_PROGRAM = ghostty|WezTerm → kitty
 KITTY_WINDOW_ID set            → kitty
@@ -148,17 +148,17 @@ Two practical notes that cost real debugging time otherwise:
 
 - **Over ssh**, `TERM` survives but `TERM_PROGRAM` usually does not. Kitty
   and Ghostty still get detected via `TERM`/`KITTY_WINDOW_ID`; iTerm2 falls
-  back to half-blocks. Acceptable, and `YOINKS_GRAPHICS=iterm` is the
+  back to half-blocks. Acceptable, and `PLUCK_GRAPHICS=iterm` is the
   override.
 - **Inside tmux**, graphics escapes need passthrough wrapping and are
   clipped wrong on pane resize. Default to blocks and let people opt in.
 
-`yoinks doctor` prints what was detected and why — the fastest answer to
+`pluck doctor` prints what was detected and why — the fastest answer to
 "why do my thumbnails look chunky."
 
 ## Decoding, with no native dependency
 
-yoinks already ships `ffmpeg-static` and resolves ffmpeg in
+pluck already ships `ffmpeg-static` and resolves ffmpeg in
 [`ytdlp.ts`](../src/lib/ytdlp.ts). ffmpeg decodes PNG, JPEG, WebP, GIF, AVIF
 and every video format yt-dlp can produce, resizes, and writes raw pixels to
 stdout — which is precisely a thumbnail pipeline, already in the dependency
@@ -205,7 +205,7 @@ Post-processing:
   accent color is usually the most important color in a design reference and
   the last one a naive frequency sort would keep.
 - `weight` is the fraction of sampled pixels, so palettes sum across a board.
-  That's the arithmetic behind [`yoinks brief`](agents.md#brief).
+  That's the arithmetic behind [`pluck brief`](agents.md#brief).
 
 Roles are assigned heuristically for the brief: the highest-weight color at
 an extreme luminance is `background`, the highest-contrast color against it
@@ -221,9 +221,9 @@ cache/thumbs/<sha256>-<w>x<h>.rgb    raw rgb24, cell dimensions in the name
 
 Raw rather than PNG: no decode on read, and a 44×22 thumbnail is 5.8 KB.
 Warm the two or three sizes the grid actually uses at ingest time, so the
-first `yoinks lib` after a capture is instant.
+first `pluck lib` after a capture is instant.
 
-The whole `cache/` tree is regenerable and is the only thing yoinks deletes
+The whole `cache/` tree is regenerable and is the only thing pluck deletes
 without being asked.
 
 ## Performance budget

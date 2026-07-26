@@ -7,41 +7,41 @@ import {detectCaps, doctor, formatDoctor, type DoctorReport} from './caps.js'
 
 const FORCED = ['kitty', 'iterm', 'blocks', 'off'] as const
 
-test('YOINKS_GRAPHICS is obeyed and stops detection dead', () => {
+test('PLUCK_GRAPHICS is obeyed and stops detection dead', () => {
   for (const forced of FORCED) {
     // every other signal set, and pointing somewhere else
     const caps = detectCaps({
-      YOINKS_GRAPHICS: forced,
+      PLUCK_GRAPHICS: forced,
       NO_COLOR: '1',
       TMUX: '/tmp/tmux-501/default,1,0',
       TERM_PROGRAM: 'iTerm.app',
       TERM: 'xterm-kitty',
     })
     assert.equal(caps.protocol, forced)
-    assert.equal(caps.reason, `YOINKS_GRAPHICS=${forced}`)
+    assert.equal(caps.reason, `PLUCK_GRAPHICS=${forced}`)
   }
 })
 
 test('the override is case- and whitespace-tolerant', () => {
-  assert.equal(detectCaps({YOINKS_GRAPHICS: ' Kitty '}).protocol, 'kitty')
+  assert.equal(detectCaps({PLUCK_GRAPHICS: ' Kitty '}).protocol, 'kitty')
 })
 
 test('sixel is accepted, drawn as blocks, and says so', () => {
-  const caps = detectCaps({YOINKS_GRAPHICS: 'sixel'})
+  const caps = detectCaps({PLUCK_GRAPHICS: 'sixel'})
   assert.equal(caps.protocol, 'blocks')
   assert.match(caps.reason, /sixel/)
   assert.match(caps.reason, /not implemented/)
 })
 
-test('an unrecognised YOINKS_GRAPHICS value falls through to detection', () => {
+test('an unrecognised PLUCK_GRAPHICS value falls through to detection', () => {
   // a typo in a shell profile must not cost you thumbnails
-  const caps = detectCaps({YOINKS_GRAPHICS: 'sixl', TERM_PROGRAM: 'ghostty'})
+  const caps = detectCaps({PLUCK_GRAPHICS: 'sixl', TERM_PROGRAM: 'ghostty'})
   assert.equal(caps.protocol, 'kitty')
   assert.equal(caps.reason, 'TERM_PROGRAM=ghostty')
 })
 
-test('an empty YOINKS_GRAPHICS is not an override', () => {
-  assert.equal(detectCaps({YOINKS_GRAPHICS: '', TERM_PROGRAM: 'iTerm.app'}).protocol, 'iterm')
+test('an empty PLUCK_GRAPHICS is not an override', () => {
+  assert.equal(detectCaps({PLUCK_GRAPHICS: '', TERM_PROGRAM: 'iTerm.app'}).protocol, 'iterm')
 })
 
 test('NO_COLOR beats tmux and beats every terminal signal', () => {
@@ -102,17 +102,17 @@ test('truecolor tracks COLORTERM and is never claimed with color off', () => {
   assert.equal(detectCaps({COLORTERM: '256color'}).truecolor, false)
   assert.equal(detectCaps({}).truecolor, false)
   assert.equal(detectCaps({COLORTERM: 'truecolor', NO_COLOR: '1'}).truecolor, false)
-  assert.equal(detectCaps({COLORTERM: 'truecolor', YOINKS_GRAPHICS: 'off'}).truecolor, false)
-  assert.equal(detectCaps({COLORTERM: 'truecolor', YOINKS_GRAPHICS: 'kitty'}).truecolor, true)
+  assert.equal(detectCaps({COLORTERM: 'truecolor', PLUCK_GRAPHICS: 'off'}).truecolor, false)
+  assert.equal(detectCaps({COLORTERM: 'truecolor', PLUCK_GRAPHICS: 'kitty'}).truecolor, true)
 })
 
 test('every branch names the signal that decided it', () => {
   const envs: NodeJS.ProcessEnv[] = [
-    {YOINKS_GRAPHICS: 'kitty'},
-    {YOINKS_GRAPHICS: 'iterm'},
-    {YOINKS_GRAPHICS: 'blocks'},
-    {YOINKS_GRAPHICS: 'off'},
-    {YOINKS_GRAPHICS: 'sixel'},
+    {PLUCK_GRAPHICS: 'kitty'},
+    {PLUCK_GRAPHICS: 'iterm'},
+    {PLUCK_GRAPHICS: 'blocks'},
+    {PLUCK_GRAPHICS: 'off'},
+    {PLUCK_GRAPHICS: 'sixel'},
     {NO_COLOR: '1'},
     {TMUX: '/tmp/tmux-501/default,1,0'},
     {TERM: 'screen'},
@@ -131,20 +131,20 @@ test('every branch names the signal that decided it', () => {
 })
 
 test('detection reads only the env it is handed', () => {
-  const previous = process.env.YOINKS_GRAPHICS
-  process.env.YOINKS_GRAPHICS = 'kitty'
+  const previous = process.env.PLUCK_GRAPHICS
+  process.env.PLUCK_GRAPHICS = 'kitty'
   try {
     assert.equal(detectCaps({}).protocol, 'blocks')
   } finally {
-    if (previous === undefined) delete process.env.YOINKS_GRAPHICS
-    else process.env.YOINKS_GRAPHICS = previous
+    if (previous === undefined) delete process.env.PLUCK_GRAPHICS
+    else process.env.PLUCK_GRAPHICS = previous
   }
 })
 
 const report = (over: Partial<DoctorReport> = {}): DoctorReport => ({
-  versions: {yoinks: '1.0.0', node: '22.11.0'},
+  versions: {pluck: '1.0.0', node: '22.11.0'},
   caps: {protocol: 'blocks', truecolor: true, reason: 'inside tmux — graphics escapes need passthrough'},
-  home: '/home/someone/.yoinks',
+  home: '/home/someone/.pluck',
   library: {items: 0, blobs: 0, bytes: 0},
   ...over,
 })
@@ -158,14 +158,14 @@ test('a report with no ffmpeg and no yt-dlp renders rather than throwing', () =>
 })
 
 test('the report carries no ansi — it gets piped and pasted into bug reports', () => {
-  const text = formatDoctor(report({versions: {yoinks: '1.0.0', node: '22.11.0', ffmpeg: 'ffmpeg version 7.1'}}))
+  const text = formatDoctor(report({versions: {pluck: '1.0.0', node: '22.11.0', ffmpeg: 'ffmpeg version 7.1'}}))
   assert.ok(!text.includes('\u001b'), 'doctor output must stay plain text')
 })
 
 test('every value lands in the same column', () => {
   const text = formatDoctor(
     report({
-      versions: {yoinks: '1.0.0', node: '22.11.0', ytdlp: '2026.07.11', ffmpeg: 'ffmpeg version 7.1'},
+      versions: {pluck: '1.0.0', node: '22.11.0', ytdlp: '2026.07.11', ffmpeg: 'ffmpeg version 7.1'},
       library: {items: 1284, blobs: 1109, bytes: 3_435_973_836},
     }),
   )
@@ -185,16 +185,16 @@ test('the color row reports the ladder step, not just a boolean', () => {
   assert.match(formatDoctor(report({caps: {protocol: 'off', truecolor: false, reason: 'NO_COLOR set'}})), /color\s+off/)
 })
 
-/** Point the library at a throwaway directory. Never touch a real ~/.yoinks. */
+/** Point the library at a throwaway directory. Never touch a real ~/.pluck. */
 async function withTempHome(run: (home: string) => Promise<void>): Promise<void> {
-  const previous = process.env.YOINKS_HOME
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-caps-'))
-  process.env.YOINKS_HOME = dir
+  const previous = process.env.PLUCK_HOME
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-caps-'))
+  process.env.PLUCK_HOME = dir
   try {
     await run(dir)
   } finally {
-    if (previous === undefined) delete process.env.YOINKS_HOME
-    else process.env.YOINKS_HOME = previous
+    if (previous === undefined) delete process.env.PLUCK_HOME
+    else process.env.PLUCK_HOME = previous
     await fs.rm(dir, {recursive: true, force: true})
   }
 }
@@ -204,7 +204,7 @@ test('doctor reports an empty library as zeros', async () => {
     const found = await doctor()
     assert.deepEqual(found.library, {items: 0, blobs: 0, bytes: 0})
     assert.equal(found.home, home)
-    assert.match(found.versions.yoinks, /^\d+\.\d+\.\d+/)
+    assert.match(found.versions.pluck, /^\d+\.\d+\.\d+/)
     assert.ok(found.versions.node.length > 0)
     assert.ok(found.caps.reason.length > 0)
     // a missing binary is information, not a throw

@@ -28,7 +28,7 @@ with exactly one extractor and no store.
 
 Two properties worth protecting as this grows:
 
-**Ingest is idempotent.** Capture is content-addressed, so yoinking the same
+**Ingest is idempotent.** Capture is content-addressed, so plucking the same
 image twice costs one hash and writes nothing new. This matters more than it
 sounds — it's what makes an agent safe to point at a list of urls.
 
@@ -114,7 +114,7 @@ Candidates from all extractors land in one list. Rules:
    resolves it to a row each render. Today [`app.tsx`](../src/app.tsx) keeps
    `highlightRef` as a numeric index — fine when the list is built once,
    wrong the moment it streams.
-4. **Empty is a real outcome.** A page with nothing yoinkable gets an empty
+4. **Empty is a real outcome.** A page with nothing pluckable gets an empty
    picker with an explanation, not an error screen.
 
 ## Phases
@@ -139,7 +139,7 @@ shape.
 New phases: `library`, `detail`, `boards`. Renamed: `downloading` →
 `capturing`, since it now covers multi-asset captures.
 
-`library` is reachable from `input` (`l`, or `yoinks lib`) and from `done` —
+`library` is reachable from `input` (`l`, or `pluck lib`) and from `done` —
 finishing a capture should offer to show you where it landed.
 
 ## Rendering
@@ -175,12 +175,12 @@ place, and the comment at the top of that file explains why.
 
 ## Processes and concurrency
 
-yoinks shells out rather than binding native code. Current and planned
+pluck shells out rather than binding native code. Current and planned
 children:
 
 | Binary | Used for | Resolution |
 |---|---|---|
-| `yt-dlp` | video probe and fetch | `PATH`, then `$YOINKS_HOME/bin`, then fetch the standalone release ✅ |
+| `yt-dlp` | video probe and fetch | `PATH`, then `$PLUCK_HOME/bin`, then fetch the standalone release ✅ |
 | `ffmpeg` | stream merge, mp3 extract ✅ · image decode, resize, frame grab ⬜ | `PATH`, then bundled `ffmpeg-static` ✅ |
 | `chrome` / `chromium` | full-page screenshots ⬜ | well-known install paths, then `PATH`; absent is fine, the `shot` row just doesn't appear |
 
@@ -230,7 +230,7 @@ src/
       shot.ts
 
     store/
-      paths.ts         $YOINKS_HOME resolution, migration
+      paths.ts         $PLUCK_HOME resolution, migration
       ingest.ts        hash, dedupe, write blob + item
       log.ts           items.jsonl append + replay
       query.ts         search, filter, rank
@@ -270,5 +270,5 @@ failure mode here.
 
 Beyond that: pure functions get unit tests (`blocks.ts`, `log.ts` replay,
 `query.ts` ranking, `classify.ts` decisions), the store gets tests against a
-temp `YOINKS_HOME`, and extractors get tests against saved html fixtures so
+temp `PLUCK_HOME`, and extractors get tests against saved html fixtures so
 the suite never touches the network.

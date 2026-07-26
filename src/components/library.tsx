@@ -22,7 +22,7 @@ import {useTheme} from '../theme.js'
  * would stall the frame, and one that keeps decoding after you've scrolled
  * past is what makes a terminal ui feel slow.
  *
- * See docs/cli.md#yoinks-lib-query.
+ * See docs/cli.md#pluck-lib-query.
  */
 
 /** A thumbnail aims for this many cells wide; narrow terminals get less. */
@@ -437,7 +437,7 @@ export function LibraryScreen({isActive, columns, rows, onExit, onClickTargets}:
               ? 'reading your library…'
               : query || board
                 ? 'nothing matches — esc clears it'
-                : 'nothing yoinked yet — paste a link'}
+                : 'nothing plucked yet — paste a link'}
           </Text>
         ) : (
           cellRows.map((row, rowIndex) => (

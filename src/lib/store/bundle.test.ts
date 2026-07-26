@@ -13,18 +13,18 @@ import {blobDir, blobsDir, findOriginal, itemsLogPath} from './paths.js'
 import {isoNow, type Item} from './types.js'
 
 /**
- * Every test runs against a throwaway $YOINKS_HOME, and the round trips run
+ * Every test runs against a throwaway $PLUCK_HOME, and the round trips run
  * against two of them. Nothing here may look at the developer's real library.
  */
 async function withHome<T>(run: (home: string) => Promise<T>): Promise<T> {
-  const before = process.env.YOINKS_HOME
-  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-bundle-'))
-  process.env.YOINKS_HOME = home
+  const before = process.env.PLUCK_HOME
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-bundle-'))
+  process.env.PLUCK_HOME = home
   try {
     return await run(home)
   } finally {
-    if (before === undefined) delete process.env.YOINKS_HOME
-    else process.env.YOINKS_HOME = before
+    if (before === undefined) delete process.env.PLUCK_HOME
+    else process.env.PLUCK_HOME = before
     await fs.rm(home, {recursive: true, force: true})
   }
 }
@@ -303,7 +303,7 @@ test('an empty bundle is valid and imports as nothing', async () => {
 test('export --out writes a file that import reads back', async () => {
   const target = await withHome(async home => {
     await ingest(capture(await incoming(home, 'a.png', 'pixels a'), {note: 'kept'}))
-    const file = path.join(home, 'hero-refs.yoink')
+    const file = path.join(home, 'hero-refs.pluck')
 
     const exported = await cmdExport(['--out', file, '--json'])
     assert.equal(exported.ok, true)
@@ -312,7 +312,7 @@ test('export --out writes a file that import reads back', async () => {
       {format: 1, created_at: undefined, items: 1, blobs: 1, out: file},
     )
 
-    const copy = path.join(os.tmpdir(), `yoinks-bundle-copy-${process.pid}.yoink`)
+    const copy = path.join(os.tmpdir(), `pluck-bundle-copy-${process.pid}.pluck`)
     await fs.copyFile(file, copy)
     return copy
   })
@@ -337,7 +337,7 @@ test('the commands refuse what they cannot do, with a usage code', async () => {
     assert.equal(noPath.ok, false)
     assert.equal(noPath.ok === false && noPath.error.code, 'usage')
 
-    const missing = await cmdImport([path.join(home, 'nope.yoink')])
+    const missing = await cmdImport([path.join(home, 'nope.pluck')])
     assert.equal(missing.ok === false && missing.error.code, 'not_found')
 
     const stray = await cmdExport(['extra'])
@@ -382,10 +382,10 @@ test('a bundle round-trips through real files, not just memory streams', async (
   // unhandled ERR_STREAM_DESTROYED: a Buffer/PassThrough has completely
   // different flow-control and destroy semantics from fs streams, and the
   // blob directory doesn't exist yet when the write stream opens.
-  const source = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-fs-src-'))
-  const target = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-fs-dst-'))
-  const work = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-fs-work-'))
-  const previous = process.env.YOINKS_HOME
+  const source = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-fs-src-'))
+  const target = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-fs-dst-'))
+  const work = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-fs-work-'))
+  const previous = process.env.PLUCK_HOME
 
   try {
     // several hundred KB so the body spans many stream chunks — a single
@@ -395,7 +395,7 @@ test('a bundle round-trips through real files, not just memory streams', async (
     const incoming = path.join(work, 'big.png')
     await fs.writeFile(incoming, big)
 
-    process.env.YOINKS_HOME = source
+    process.env.PLUCK_HOME = source
     const stored = await ingest({
       path: incoming,
       kind: 'image',
@@ -404,7 +404,7 @@ test('a bundle round-trips through real files, not just memory streams', async (
       note: 'large enough to span chunks',
     })
 
-    const bundlePath = path.join(work, 'out.yoink')
+    const bundlePath = path.join(work, 'out.pluck')
     const sink = createWriteStream(bundlePath)
     await exportBundle({}, sink)
     // exportBundle deliberately never ends `out` — it may be stdout, and the
@@ -412,7 +412,7 @@ test('a bundle round-trips through real files, not just memory streams', async (
     sink.end()
     await once(sink, 'close')
 
-    process.env.YOINKS_HOME = target
+    process.env.PLUCK_HOME = target
     const first = await importBundle(createReadStream(bundlePath))
     assert.equal(first.items, 1)
     assert.equal(first.blobs, 1)
@@ -427,8 +427,8 @@ test('a bundle round-trips through real files, not just memory streams', async (
     assert.equal(second.blobs, 0)
     assert.equal((await loadItems()).length, 1)
   } finally {
-    if (previous === undefined) delete process.env.YOINKS_HOME
-    else process.env.YOINKS_HOME = previous
+    if (previous === undefined) delete process.env.PLUCK_HOME
+    else process.env.PLUCK_HOME = previous
     for (const dir of [source, target, work]) await fs.rm(dir, {recursive: true, force: true})
   }
 })
@@ -439,9 +439,9 @@ test('a bundle that goes bad mid-blob rejects instead of taking the process down
   // then emits ERR_STREAM_DESTROYED on a stream nobody is listening to — an
   // uncaught exception rather than a failed import. It needs a real file and a
   // blob big enough to still be in flight, so an in-memory stream never sees it.
-  const work = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-bad-'))
+  const work = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-bad-'))
   try {
-    const bundlePath = path.join(work, 'refs.yoink')
+    const bundlePath = path.join(work, 'refs.pluck')
 
     await withHome(async () => {
       const big = Buffer.alloc(400_000)
@@ -480,17 +480,17 @@ test('a bundle that goes bad mid-blob rejects instead of taking the process down
 test('an imported board is recreated, not just referenced', async () => {
   // boards.json doesn't travel in the bundle. Without recreating it on import,
   // sharing a board — the entire point of a bundle — lands the items while
-  // `yoinks boards` stays empty and the board is invisible.
-  const source = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-bd-src-'))
-  const target = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-bd-dst-'))
-  const work = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-bd-work-'))
-  const previous = process.env.YOINKS_HOME
+  // `pluck boards` stays empty and the board is invisible.
+  const source = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-bd-src-'))
+  const target = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-bd-dst-'))
+  const work = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-bd-work-'))
+  const previous = process.env.PLUCK_HOME
 
   try {
     const incoming = path.join(work, 'a.png')
     await fs.writeFile(incoming, 'pixels')
 
-    process.env.YOINKS_HOME = source
+    process.env.PLUCK_HOME = source
     await ingest({
       path: incoming,
       kind: 'image',
@@ -508,7 +508,7 @@ test('an imported board is recreated, not just referenced', async () => {
     })
     await exportBundle({}, sink)
 
-    process.env.YOINKS_HOME = target
+    process.env.PLUCK_HOME = target
     await importBundle(Readable.from(Buffer.concat(chunks)))
 
     const item = (await loadItems())[0]
@@ -517,8 +517,8 @@ test('an imported board is recreated, not just referenced', async () => {
     const boards = await loadBoards()
     assert.ok(boards['hero-refs'], 'the board itself must exist on the receiving side')
   } finally {
-    if (previous === undefined) delete process.env.YOINKS_HOME
-    else process.env.YOINKS_HOME = previous
+    if (previous === undefined) delete process.env.PLUCK_HOME
+    else process.env.PLUCK_HOME = previous
     for (const dir of [source, target, work]) await fs.rm(dir, {recursive: true, force: true})
   }
 })

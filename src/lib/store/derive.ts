@@ -122,7 +122,7 @@ const MERGE_DISTANCE = 25
  * that bucket invents a colour that appears nowhere in the image — flat-colour
  * art (logos, ui screenshots, vector work) reliably produced a muddy blend
  * between two of its actual colours. A palette entry the reference does not
- * contain is worse than a missing one, because `yoinks brief` hands these
+ * contain is worse than a missing one, because `pluck brief` hands these
  * hexes to an agent as the reference's own colours.
  *
  * Walks outward from the median and takes the first real boundary, lower side

@@ -58,7 +58,7 @@ export function render(envelope: Envelope<unknown>): string {
 }
 
 /**
- * `--json` is implied whenever stdout isn't a terminal, so `yoinks find dark |
+ * `--json` is implied whenever stdout isn't a terminal, so `pluck find dark |
  * jq` works with no flag while the same command in a terminal stays readable.
  */
 export function wantsJson(explicit: boolean | undefined, isTTY: boolean): boolean {

@@ -39,7 +39,7 @@ function commandWorks(cmd: string, args: string[]): Promise<boolean> {
 export async function ensureYtDlp(onStatus: (message: string) => void, signal?: AbortSignal): Promise<string> {
   if (await commandWorks('yt-dlp', ['--version'])) return 'yt-dlp'
 
-  // binDir() rather than a hardcoded ~/.yoinks/bin, so $YOINKS_HOME sends the
+  // binDir() rather than a hardcoded ~/.pluck/bin, so $PLUCK_HOME sends the
   // binary to the same place the rest of the app looks for it
   const local = path.join(binDir(), process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp')
   if (await commandWorks(local, ['--version'])) return local
@@ -129,7 +129,7 @@ export async function probe(ytdlp: string, url: string, signal?: AbortSignal): P
     throw new Error('Could not parse video info from yt-dlp.')
   }
 
-  const infoJsonPath = path.join(os.tmpdir(), `yoinks-info-${process.pid}-${Date.now()}.json`)
+  const infoJsonPath = path.join(os.tmpdir(), `pluck-info-${process.pid}-${Date.now()}.json`)
   await fs.writeFile(infoJsonPath, stdout)
   return {info, infoJsonPath}
 }
@@ -211,7 +211,7 @@ export type DownloadHandlers = {
   onProcessing: () => void
 }
 
-const PROGRESS_PREFIX = 'YOINK|'
+const PROGRESS_PREFIX = 'PLUCK|'
 const PROGRESS_TEMPLATE = `${PROGRESS_PREFIX}%(progress.downloaded_bytes)s|%(progress.total_bytes)s|%(progress.total_bytes_estimate)s|%(progress.speed)s|%(progress.eta)s`
 
 let activeChild: ChildProcess | undefined

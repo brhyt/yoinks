@@ -158,9 +158,9 @@ async function sizeOfFile(file: string): Promise<number> {
   try {
     stat = await fs.stat(file)
   } catch {
-    throw new Error(`Nothing to yoink at ${file} — that file is gone.`)
+    throw new Error(`Nothing to pluck at ${file} — that file is gone.`)
   }
-  if (!stat.isFile()) throw new Error(`${file} is not a file, so there is nothing to yoink.`)
+  if (!stat.isFile()) throw new Error(`${file} is not a file, so there is nothing to pluck.`)
   return stat.size
 }
 

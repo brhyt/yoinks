@@ -5,22 +5,22 @@
 ## Shape
 
 ```
-yoinks [url]                    interactive — the default
-yoinks <command> [args] [flags] everything else
+pluck [url]                    interactive — the default
+pluck <command> [args] [flags] everything else
 ```
 
-A bare `yoinks` or `yoinks <url>` opens the full-screen UI. Every other
-command is a verb. There is no `yoinks capture` in interactive mode — if you
+A bare `pluck` or `pluck <url>` opens the full-screen UI. Every other
+command is a verb. There is no `pluck capture` in interactive mode — if you
 have a url, you paste it.
 
 ## Interactive
 
-### `yoinks [url]` ✅
+### `pluck [url]` ✅
 
 ```sh
-yoinks                                  # prompt for a url
-yoinks https://youtu.be/dQw4w9WgXcQ     # straight to the picker
-yoinks --theme light                    # force a palette for this launch
+pluck                                  # prompt for a url
+pluck https://youtu.be/dQw4w9WgXcQ     # straight to the picker
+pluck --theme light                    # force a palette for this launch
 ```
 
 Takes over the terminal on the alternate screen and restores your scrollback
@@ -28,7 +28,7 @@ on exit. If your clipboard holds a url when you launch bare, `⇥` pastes it.
 
 | key | |
 |---|---|
-| `↵` | yoink |
+| `↵` | pluck |
 | `↑` `↓` / `j` `k` / number | move in the picker |
 | `space` | multi-select in the picker ⬜ |
 | `↑` | url history, from the input ✅ |
@@ -37,15 +37,15 @@ on exit. If your clipboard holds a url when you launch bare, `⇥` pastes it.
 | `^t` | cycle theme |
 | `^c` | quit |
 
-The yoink button, picker rows, footer hints and the logo are all clickable.
+The pluck button, picker rows, footer hints and the logo are all clickable.
 The logo takes you home.
 
-### `yoinks lib [query]` ⬜
+### `pluck lib [query]` ⬜
 
 ```sh
-yoinks lib
-yoinks lib dark editorial
-yoinks lib --board hero-refs
+pluck lib
+pluck lib dark editorial
+pluck lib --board hero-refs
 ```
 
 The thumbnail grid.
@@ -60,7 +60,7 @@ The thumbnail grid.
 | `space` | multi-select |
 | `c` | copy — file path in the grid, hex on a swatch in detail |
 | `o` | open in your default app |
-| `x` | delete (tombstone; `yoinks compact` reclaims the bytes) |
+| `x` | delete (tombstone; `pluck compact` reclaims the bytes) |
 | `esc` | back |
 
 ## Headless
@@ -69,7 +69,7 @@ Every command below emits JSON on `--json` and exits without touching the
 alternate screen.
 
 **Auto-detection:** if `stdout` is not a TTY, `--json` is implied. So
-`yoinks find dark | jq` works with no flag, and `yoinks find dark` in a
+`pluck find dark | jq` works with no flag, and `pluck find dark` in a
 terminal prints a human table. [`cli.tsx`](../src/cli.tsx) already branches
 on `isTTY` for clipboard handling — this extends the same check.
 
@@ -80,7 +80,7 @@ on `isTTY` for clipboard handling — this extends the same check.
 ```
 
 ```json
-{"ok": false, "error": {"code": "no_candidates", "message": "Nothing yoinkable on that page."}}
+{"ok": false, "error": {"code": "no_candidates", "message": "Nothing pluckable on that page."}}
 ```
 
 | Exit | |
@@ -93,13 +93,13 @@ Error codes are a closed set: `usage`, `not_found`, `no_candidates`,
 `fetch_failed`, `extractor_failed`, `unsupported`, `store_error`,
 `cancelled`.
 
-### `yoinks capture <url>` ⬜
+### `pluck capture <url>` ⬜
 
 ```sh
-yoinks capture https://dribbble.com/shots/… --json
-yoinks capture <url> --all --board hero-refs --tag dark --tag editorial
-yoinks capture <url> --kind image --best
-yoinks capture <url> --dry-run --json      # probe only, capture nothing
+pluck capture https://dribbble.com/shots/… --json
+pluck capture <url> --all --board hero-refs --tag dark --tag editorial
+pluck capture <url> --kind image --best
+pluck capture <url> --dry-run --json      # probe only, capture nothing
 ```
 
 | Flag | |
@@ -132,7 +132,7 @@ and reports `"deduped": true`.
   "data": {
     "captured": [
       {"id": "01K3F7…", "sha256": "9c4f8a…", "kind": "image",
-       "path": "/Users/you/.yoinks/library/blobs/9c/9c4f8a…/original.png",
+       "path": "/Users/you/.pluck/library/blobs/9c/9c4f8a…/original.png",
        "deduped": false}
     ],
     "skipped": []
@@ -140,12 +140,12 @@ and reports `"deduped": true`.
 }
 ```
 
-### `yoinks find <query>` ⬜
+### `pluck find <query>` ⬜
 
 ```sh
-yoinks find "dark editorial" --json
-yoinks find --board hero-refs --kind image --limit 20
-yoinks find --tag orange --since 2026-01-01
+pluck find "dark editorial" --json
+pluck find --board hero-refs --kind image --limit 20
+pluck find --tag orange --since 2026-01-01
 ```
 
 | Flag | |
@@ -160,20 +160,20 @@ Free-text matches title, note, tags, board and site. `--color` is the one
 people don't expect and reach for constantly — "the reference with that
 orange" is how visual memory actually works.
 
-### `yoinks show <id|sha256>` ⬜
+### `pluck show <id|sha256>` ⬜
 
 Full record for one asset: item fields, blob meta, palette, and the absolute
 path. Accepts an id prefix as long as it's unambiguous.
 
-### `yoinks brief <query>` ⬜
+### `pluck brief <query>` ⬜
 
 The synthesis command. See [agents.md](agents.md#brief) for the full schema
 and how it's computed.
 
 ```sh
-yoinks brief "dark analytics dashboard" --json
-yoinks brief --board hero-refs --md
-yoinks brief "editorial" --limit 12 --json
+pluck brief "dark analytics dashboard" --json
+pluck brief --board hero-refs --md
+pluck brief "editorial" --limit 12 --json
 ```
 
 | Flag | |
@@ -185,36 +185,36 @@ yoinks brief "editorial" --limit 12 --json
 ### Library management ⬜
 
 ```sh
-yoinks boards                       # list, with counts
-yoinks boards new <name> [--note]
-yoinks tag <id> <tag>...            # --rm to remove
-yoinks mv <id> --board <b>
-yoinks note <id> <text>
-yoinks rm <id>...                   # tombstone
-yoinks compact                      # collapse the log, keeping every tombstone
+pluck boards                       # list, with counts
+pluck boards new <name> [--note]
+pluck tag <id> <tag>...            # --rm to remove
+pluck mv <id> --board <b>
+pluck note <id> <text>
+pluck rm <id>...                   # tombstone
+pluck compact                      # collapse the log, keeping every tombstone
 ```
 
-### `yoinks export` / `yoinks import` ⬜
+### `pluck export` / `pluck import` ⬜
 
 ```sh
-yoinks export --board hero-refs > hero-refs.yoink
-yoinks export --tag dark --since 2026-01-01 > dark.yoink
-yoinks import hero-refs.yoink
-yoinks import hero-refs.yoink --dry-run --json
+pluck export --board hero-refs > hero-refs.pluck
+pluck export --tag dark --since 2026-01-01 > dark.pluck
+pluck import hero-refs.pluck
+pluck import hero-refs.pluck --dry-run --json
 ```
 
 Bundle format in [asset-model.md](asset-model.md#export-bundle). Import
 merges; it never overwrites. Importing twice is a no-op.
 
-### `yoinks skill install` ⬜
+### `pluck skill install` ⬜
 
 ```sh
-yoinks skill install                      # ~/.claude/skills/inspiration/
-yoinks skill install --dir ./.claude/skills
-yoinks skill print                        # to stdout, for other runtimes
+pluck skill install                      # ~/.claude/skills/inspiration/
+pluck skill install --dir ./.claude/skills
+pluck skill print                        # to stdout, for other runtimes
 ```
 
-### `yoinks mcp` ⬜
+### `pluck mcp` ⬜
 
 Runs a stdio MCP server. Not meant to be run by hand — it's what you point
 an MCP client at. Tools in [agents.md](agents.md#tools).
@@ -222,23 +222,23 @@ an MCP client at. Tools in [agents.md](agents.md#tools).
 ```json
 {
   "mcpServers": {
-    "yoinks": {"command": "yoinks", "args": ["mcp"]}
+    "pluck": {"command": "pluck", "args": ["mcp"]}
   }
 }
 ```
 
-### `yoinks doctor` ⬜
+### `pluck doctor` ⬜
 
 ```
-$ yoinks doctor
-  yoinks            1.0.0
+$ pluck doctor
+  pluck            1.0.0
   node              22.11.0
-  yt-dlp            2026.07.11   ~/.yoinks/bin/yt-dlp
+  yt-dlp            2026.07.11   ~/.pluck/bin/yt-dlp
   ffmpeg            7.1          /opt/homebrew/bin/ffmpeg
   chrome            141.0        /Applications/Google Chrome.app/…
   graphics          kitty        (Ghostty 1.2)
   library           1,284 items · 1,109 blobs · 3.2 GB
-  home              ~/.yoinks
+  home              ~/.pluck
 ```
 
 First thing to ask for in a bug report, and the fastest way to explain why
@@ -257,13 +257,13 @@ thumbnails look blocky or why the screenshot row never appears.
 
 | | | Status |
 |---|---|---|
-| `YOINKS_HOME` | library and binaries (default `~/.yoinks`) | ⬜ |
-| `YOINKS_GRAPHICS` | force `kitty`, `iterm`, `sixel`, `blocks`, `off` | ⬜ |
+| `PLUCK_HOME` | library and binaries (default `~/.pluck`) | ⬜ |
+| `PLUCK_GRAPHICS` | force `kitty`, `iterm`, `sixel`, `blocks`, `off` | ⬜ |
 | `NO_COLOR` | disables color; thumbnails degrade to a text placeholder | ⬜ |
 
 ## Compatibility
 
-`yoinks <video-url>` behaves in v1.0 exactly as it does in 0.3.1 — same
+`pluck <video-url>` behaves in v1.0 exactly as it does in 0.3.1 — same
 picker rows, same labels, same download destination. The regression test
 described in [architecture.md](architecture.md#testing) exists to keep that
 true.

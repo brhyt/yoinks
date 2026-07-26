@@ -7,16 +7,16 @@ import {append, compact, deleteItem, getItem, loadItems, putItem, readRecords, r
 import {itemsLogPath} from './paths.js'
 import {ulid, type Item, type LogRecord} from './types.js'
 
-/** Point the library at a throwaway directory. Never touch a real ~/.yoinks. */
+/** Point the library at a throwaway directory. Never touch a real ~/.pluck. */
 async function withTempHome(run: () => Promise<void>): Promise<void> {
-  const previous = process.env.YOINKS_HOME
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-log-'))
-  process.env.YOINKS_HOME = dir
+  const previous = process.env.PLUCK_HOME
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-log-'))
+  process.env.PLUCK_HOME = dir
   try {
     await run()
   } finally {
-    if (previous === undefined) delete process.env.YOINKS_HOME
-    else process.env.YOINKS_HOME = previous
+    if (previous === undefined) delete process.env.PLUCK_HOME
+    else process.env.PLUCK_HOME = previous
     await fs.rm(dir, {recursive: true, force: true})
   }
 }

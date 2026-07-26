@@ -1,6 +1,6 @@
 import {isThemeMode, type ThemeMode} from '../theme.js'
 
-/** Verbs. A bare `yoinks` or `yoinks <url>` has no command — you just paste. */
+/** Verbs. A bare `pluck` or `pluck <url>` has no command — you just paste. */
 export const COMMANDS = [
   'doctor',
   'lib',

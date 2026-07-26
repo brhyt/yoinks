@@ -1,13 +1,14 @@
 {
-  "name": "yoinks",
-  "version": "0.3.1",
-  "description": "yoink any video from YouTube, X, Instagram, Threads & 1800+ sites — right from your terminal. paste. yoink. done.",
+  "name": "pluck-tools",
+  "version": "0.4.0",
+  "description": "capture inspiration from anywhere on the web, keep it in a library you own, browse it in your terminal — and hand it to your coding agents",
   "type": "module",
   "bin": {
-    "yoinks": "dist/cli.js"
+    "pluck": "dist/cli.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "skills"
   ],
   "engines": {
     "node": ">=18"
@@ -22,16 +23,19 @@
   },
   "author": "Pablo Stanley",
   "keywords": [
-    "video",
-    "downloader",
-    "yt-dlp",
-    "youtube",
-    "instagram",
-    "twitter",
-    "threads",
+    "inspiration",
+    "moodboard",
+    "design",
+    "references",
+    "palette",
     "cli",
     "tui",
-    "ink"
+    "ink",
+    "mcp",
+    "agent",
+    "claude",
+    "video",
+    "yt-dlp"
   ],
   "license": "MIT",
   "dependencies": {
@@ -52,7 +56,7 @@
     "type": "git",
     "url": "git+https://github.com/pablostanley/yoinks.git"
   },
-  "homepage": "https://github.com/pablostanley/yoinks#readme",
+  "homepage": "https://pluck.tools",
   "bugs": {
     "url": "https://github.com/pablostanley/yoinks/issues"
   }

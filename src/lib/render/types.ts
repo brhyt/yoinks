@@ -20,7 +20,7 @@ export type Caps = {
   protocol: Protocol
   /** 24-bit color. Without it, half-blocks quantize to the 256-color cube. */
   truecolor: boolean
-  /** why this protocol was chosen — surfaced by `yoinks doctor` */
+  /** why this protocol was chosen — surfaced by `pluck doctor` */
   reason: string
 }
 

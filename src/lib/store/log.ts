@@ -17,7 +17,7 @@ import type {Item, LogRecord} from './types.js'
 
 /**
  * A single line under 4 KB written with O_APPEND is atomic on every filesystem
- * yoinks targets, so two processes appending concurrently cannot interleave.
+ * pluck targets, so two processes appending concurrently cannot interleave.
  * No lock file, no journal.
  */
 export async function append(record: LogRecord): Promise<void> {

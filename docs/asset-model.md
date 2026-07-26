@@ -32,23 +32,29 @@ This split is what makes everything else cheap:
 ## Home directory
 
 ```
-$YOINKS_HOME  →  ~/.yoinks
+$PLUCK_HOME  →  ~/.pluck
 ```
 
-Resolution order: `$YOINKS_HOME`, then `~/.yoinks`. ⬜
+Resolution order: `$PLUCK_HOME` → `~/.pluck` → **`~/.yoinks`**. ✅
 
-**On renaming the product.** If `yoinks` becomes something else, the new
-build resolves `$NEWNAME_HOME` → `~/.newname` → **falls back to `~/.yoinks`
-if it exists and the new path does not.** Read from the legacy path in
-place; don't move anyone's library on their behalf. Offer a one-line
-`newname migrate` that does the move when they ask for it. A rename that
-silently strands someone's saved work is the worst possible first impression
-of a new name.
+That last step is the rename migration, and it is load-bearing. The tool
+shipped as `yoinks` through 0.3.1, so anyone who installed it has a library
+under `~/.yoinks`. A `pluck` binary that quietly looked somewhere else would
+hand them an empty shelf and no explanation — the worst possible first
+impression of a new name. So the legacy path is **read in place** when it
+exists and `~/.pluck` does not. Nothing is moved on the user's behalf;
+`pluck migrate` does that when they ask. ⬜
+
+Once `~/.pluck` exists it always wins, which makes migration a one-way door
+rather than something that flip-flops with whatever happens to be on disk.
+
+The same courtesy applies if `pluck` is ever renamed again: resolve the new
+home first, fall back to this one, read in place.
 
 ## Layout
 
 ```
-$YOINKS_HOME/
+$PLUCK_HOME/
   bin/                              yt-dlp, fetched on first run          ✅
   library/
     items.jsonl                     append-only log — the source of truth ⬜
@@ -65,7 +71,7 @@ $YOINKS_HOME/
 Sharding on the first two hex characters keeps any one directory under a few
 hundred entries at library sizes people actually reach.
 
-`cache/` is the only directory yoinks will delete without being asked.
+`cache/` is the only directory pluck will delete without being asked.
 Everything else is yours.
 
 ## Records
@@ -154,13 +160,13 @@ current version without anyone re-capturing anything.
 
 `weight` is the fraction of sampled pixels in that cluster, so palettes are
 comparable across images and can be summed across a board — which is
-precisely what `yoinks brief` does.
+precisely what `pluck brief` does.
 
 ### Kinds
 
 `image` · `video` · `audio` · `font` · `page` · `palette` · `snippet`
 
-Two are blob-less: a **palette** yoinked directly (from a palette site,
+Two are blob-less: a **palette** plucked directly (from a palette site,
 say) and a **snippet** of text or css. They still get a `sha256` — over the
 canonical JSON serialization of their content — so one code path handles
 dedupe, and `original.json` sits where `original.png` would.
@@ -195,10 +201,10 @@ requirement. Validate it against the log's size and mtime and fall back to a
 replay whenever it looks stale.
 
 **Write** — `O_APPEND` with a single `write()` of a line under 4 KB, which
-is atomic on every filesystem yoinks targets. Two processes appending
+is atomic on every filesystem pluck targets. Two processes appending
 concurrently cannot interleave a line. No lock file, no journal.
 
-**Compact** — `yoinks compact` rewrites the log with only the winning record
+**Compact** — `pluck compact` rewrites the log with only the winning record
 per id and keeps every tombstone. Pure housekeeping; never required.
 
 Blob garbage collection is not implemented: a tombstoned item's bytes stay on
@@ -231,11 +237,11 @@ change any record above.
 The manual version of sync, and useful on its own for sharing a board.
 
 ```sh
-yoinks export --board hero-refs > hero-refs.yoink    # ⬜
-yoinks import hero-refs.yoink                        # ⬜
+pluck export --board hero-refs > hero-refs.pluck    # ⬜
+pluck import hero-refs.pluck                        # ⬜
 ```
 
-A `.yoink` bundle is a gzipped tar:
+A `.pluck` bundle is a gzipped tar:
 
 ```
 manifest.json        format version, created_at, item + blob counts
@@ -269,7 +275,7 @@ Two consequences worth stating plainly, because they're the trade:
 
 - **Nothing is recoverable if you lose the directory.** There is no server
   with a copy. Back it up.
-- **`yoinks brief` output contains your source urls and notes.** When you
+- **`pluck brief` output contains your source urls and notes.** When you
   hand it to an agent running in the cloud, that goes with it. That's the
   point of the feature, but it's worth knowing which command crosses the
   line and which don't — reads and captures are local; only what you

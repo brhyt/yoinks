@@ -9,7 +9,7 @@ Ask a coding agent for "a dark analytics dashboard" and you get the average
 of every dark analytics dashboard on the internet. Not wrong. Not yours.
 
 The gap isn't the model's taste — it's that the model has never seen what
-*you* liked. yoinks closes it by handing over the thing you already
+*you* liked. pluck closes it by handing over the thing you already
 collected, in a form an agent can act on:
 
 - a **weighted palette**, so colors come from your references and not from a
@@ -26,7 +26,7 @@ either the agent reads seven screenshots you saved or it doesn't.
 ```
              ┌──────────────┐   ┌───────────────┐
              │  SKILL.md    │   │  MCP server   │
-             │  when to use │   │  yoinks mcp   │
+             │  when to use │   │  pluck mcp   │
              └──────┬───────┘   └───────┬───────┘
                     └────────┬──────────┘
                              ▼
@@ -55,9 +55,9 @@ Full reference in [cli.md](cli.md#headless). The contract:
 ## Layer 2 — the skill
 
 ```sh
-yoinks skill install            # → ~/.claude/skills/inspiration/SKILL.md
-yoinks skill install --dir ./.claude/skills
-yoinks skill print              # stdout, for other runtimes
+pluck skill install            # → ~/.claude/skills/inspiration/SKILL.md
+pluck skill install --dir ./.claude/skills
+pluck skill print              # stdout, for other runtimes
 ```
 
 The skill ships in the package
@@ -79,13 +79,13 @@ no visual output. A skill that fires on everything gets uninstalled.
 ## Layer 3 — MCP
 
 ```sh
-yoinks mcp     # stdio server
+pluck mcp     # stdio server
 ```
 
 ```json
 {
   "mcpServers": {
-    "yoinks": {"command": "yoinks", "args": ["mcp"]}
+    "pluck": {"command": "pluck", "args": ["mcp"]}
   }
 }
 ```
@@ -157,8 +157,8 @@ is not worth the convenience, and nothing in the design brief requires it.
 The synthesis pass. Everything else returns records; this returns direction.
 
 ```sh
-yoinks brief "dark analytics dashboard" --json
-yoinks brief --board hero-refs --md
+pluck brief "dark analytics dashboard" --json
+pluck brief --board hero-refs --md
 ```
 
 ### Computation
@@ -223,7 +223,7 @@ which matters when it's feeding a generator that's already stochastic.
     "references": [
       {
         "id": "01K3F7Q2M8ZR4V6N0YB1TXCJHD",
-        "path": "/Users/you/.yoinks/library/blobs/9c/9c4f8a…/original.png",
+        "path": "/Users/you/.pluck/library/blobs/9c/9c4f8a…/original.png",
         "kind": "image",
         "source": "https://…",
         "title": "Analytics dashboard — dark",
@@ -277,14 +277,14 @@ Two consequences worth being deliberate about:
 - **A private board is not a permission boundary.** Any agent with the MCP
   server configured can search every board. If something shouldn't reach an
   agent, it shouldn't be in the library the agent can reach — keep a
-  separate `YOINKS_HOME` for it.
+  separate `PLUCK_HOME` for it.
 
 ## Non-goals
 
 - **No writes beyond capture.** Covered above.
-- **No LLM inside yoinks.** The brief is arithmetic. No API key, no network,
+- **No LLM inside pluck.** The brief is arithmetic. No API key, no network,
   no non-determinism, no second opinion about your taste.
-- **No opinions in the data.** yoinks reports what's in your references. It
+- **No opinions in the data.** pluck reports what's in your references. It
   does not tell an agent that your palette is "sophisticated" or
   "energetic," because that's a summary the agent can produce itself from
-  the actual pixels, and it would be yoinks putting words in your mouth.
+  the actual pixels, and it would be pluck putting words in your mouth.

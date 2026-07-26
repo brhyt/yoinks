@@ -6,24 +6,24 @@ import {CommandError, envelopeFor, ok, type Envelope} from './json.js'
 /**
  * Layer 2 — the skill.
  *
- * `yoinks skill install` drops SKILL.md where an agent runtime looks for it and
- * `yoinks skill print` writes it to stdout for the runtimes that keep skills
+ * `pluck skill install` drops SKILL.md where an agent runtime looks for it and
+ * `pluck skill print` writes it to stdout for the runtimes that keep skills
  * somewhere else. Neither adds behavior: the skill only teaches an agent *when*
  * to reach for the headless CLI it already has.
  *
  * The markdown is a constant in this file rather than a file read at run time.
  * The published package ships `dist/` and nothing else, so reading
  * `skills/inspiration/SKILL.md` next to the bundle would fail on every machine
- * that installed yoinks instead of cloning it. The test keeps the two in sync.
+ * that installed pluck instead of cloning it. The test keeps the two in sync.
  *
- * See docs/agents.md#layer-2--the-skill and docs/cli.md#yoinks-skill-install.
+ * See docs/agents.md#layer-2--the-skill and docs/cli.md#pluck-skill-install.
  */
 
 export const SKILL_RELATIVE_PATH: string = 'inspiration/SKILL.md'
 
 const SKILL_MD = `---
 name: inspiration
-description: Pull the user's own saved design references — palettes, type, screenshots — from their local yoinks library before making any visual decision. Use when building or restyling UI, choosing colors or fonts, designing a page, component, chart, or slide, or when the user refers to something they saved ("like the one I liked", "you know the look"). Do not use for backend work, refactors, or anything with no visual output.
+description: Pull the user's own saved design references — palettes, type, screenshots — from their local pluck library before making any visual decision. Use when building or restyling UI, choosing colors or fonts, designing a page, component, chart, or slide, or when the user refers to something they saved ("like the one I liked", "you know the look"). Do not use for backend work, refactors, or anything with no visual output.
 ---
 
 # Inspiration
@@ -32,7 +32,7 @@ The user keeps a library of design references they collected themselves.
 Before you make a visual decision, look at it. What's in there beats any
 default you'd otherwise reach for, because they chose it.
 
-Requires the \`yoinks\` CLI. If \`yoinks doctor\` fails, the library isn't
+Requires the \`pluck\` CLI. If \`pluck doctor\` fails, the library isn't
 available — say so once and carry on with your own judgment rather than
 guessing at what might be in it.
 
@@ -58,7 +58,7 @@ guessing at what might be in it.
 ## The loop
 
 \`\`\`sh
-yoinks brief "dark analytics dashboard" --json
+pluck brief "dark analytics dashboard" --json
 \`\`\`
 
 Then — and this is the part that matters — **read the reference files**:
@@ -84,16 +84,16 @@ when you misread something.
 ## Commands
 
 \`\`\`sh
-yoinks brief "<query>" --json          # palette + type + notes + paths
-yoinks brief --board hero-refs --json  # a whole board
-yoinks brief "<query>" --limit 12 --json
+pluck brief "<query>" --json          # palette + type + notes + paths
+pluck brief --board hero-refs --json  # a whole board
+pluck brief "<query>" --limit 12 --json
 
-yoinks find "<query>" --json           # browse before committing to a brief
-yoinks find --color "#ff6b35" --json   # "the one with that orange"
-yoinks find --kind font --json
-yoinks boards --json                   # orient first when the ask is vague
+pluck find "<query>" --json           # browse before committing to a brief
+pluck find --color "#ff6b35" --json   # "the one with that orange"
+pluck find --kind font --json
+pluck boards --json                   # orient first when the ask is vague
 
-yoinks show <id> --json                # one reference in full
+pluck show <id> --json                # one reference in full
 \`\`\`
 
 All emit \`{"ok": true, "data": …}\` or
@@ -134,7 +134,7 @@ Only when the user asks, or clearly means to ("save this", "add this to my
 refs", "keep that one"):
 
 \`\`\`sh
-yoinks capture <url> --best --board <board> --tag <tag> --note "<why>" --json
+pluck capture <url> --best --board <board> --tag <tag> --note "<why>" --json
 \`\`\`
 
 Write a real \`--note\` — why this one, what's good about it. That note is
@@ -192,7 +192,7 @@ export async function cmdSkill(args: string[]): Promise<Envelope<unknown>> {
     throw new CommandError(
       'usage',
       verb === undefined
-        ? 'yoinks skill install [--dir <path>] — or “skill print” for stdout'
+        ? 'pluck skill install [--dir <path>] — or “skill print” for stdout'
         : `unknown skill subcommand “${verb}” — try “skill install” or “skill print”`,
     )
   } catch (error) {

@@ -40,7 +40,7 @@ test('a leading verb is a command, and the rest is its arguments', () => {
   assert.equal(lib.error, undefined)
 })
 
-test('flags after a command belong to the command, not to yoinks', () => {
+test('flags after a command belong to the command, not to pluck', () => {
   // commands own flags this parser has never heard of, so it stops reading
   const parsed = parseArgs(['find', 'dark', '--color', '#ff6b35', '--limit', '5'])
   assert.equal(parsed.command, 'find')

@@ -93,7 +93,7 @@ export async function fetchToFile(url: string, ctx: FetchContext, signal?: Abort
   const totalBytes = Number.isFinite(declared) && declared > 0 ? declared : undefined
 
   if (totalBytes && totalBytes > MAX_BYTES) {
-    throw new Error(`That file is ${Math.round(totalBytes / 1024 / 1024)} MB — too large to yoink.`)
+    throw new Error(`That file is ${Math.round(totalBytes / 1024 / 1024)} MB — too large to pluck.`)
   }
 
   const filename = filenameFor(response.url || url, mime, response.headers.get('content-disposition') ?? undefined)
@@ -103,7 +103,7 @@ export async function fetchToFile(url: string, ctx: FetchContext, signal?: Abort
   let downloadedBytes = 0
   const counted = Readable.fromWeb(response.body as never).map((chunk: Buffer) => {
     downloadedBytes += chunk.length
-    if (downloadedBytes > MAX_BYTES) throw new Error('That file is too large to yoink.')
+    if (downloadedBytes > MAX_BYTES) throw new Error('That file is too large to pluck.')
     ctx.onProgress?.({downloadedBytes, totalBytes, part: 0, totalParts: 1})
     return chunk
   })

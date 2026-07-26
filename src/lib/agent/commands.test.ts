@@ -30,16 +30,16 @@ import {envelopeFor, exitCodeFor, type Envelope, type ErrorCode} from './json.js
  * only through the flags it refuses before it would reach for a url.
  */
 
-/** Every test runs against a throwaway $YOINKS_HOME — never a real ~/.yoinks. */
+/** Every test runs against a throwaway $PLUCK_HOME — never a real ~/.pluck. */
 async function withHome(run: (home: string) => Promise<void>): Promise<void> {
-  const previous = process.env.YOINKS_HOME
-  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-commands-'))
-  process.env.YOINKS_HOME = home
+  const previous = process.env.PLUCK_HOME
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-commands-'))
+  process.env.PLUCK_HOME = home
   try {
     await run(home)
   } finally {
-    if (previous === undefined) delete process.env.YOINKS_HOME
-    else process.env.YOINKS_HOME = previous
+    if (previous === undefined) delete process.env.PLUCK_HOME
+    else process.env.PLUCK_HOME = previous
     await fs.rm(home, {recursive: true, force: true})
   }
 }

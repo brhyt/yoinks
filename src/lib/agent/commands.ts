@@ -224,7 +224,7 @@ export async function cmdCapture(args: string[]): Promise<Envelope<unknown>> {
     })
 
     const [url, ...extra] = flags.positional
-    if (!url) throw new CommandError('usage', 'yoinks capture <url> — a url is required')
+    if (!url) throw new CommandError('usage', 'pluck capture <url> — a url is required')
     if (extra.length) throw new CommandError('usage', 'capture takes a single url')
     try {
       new URL(url)
@@ -258,7 +258,7 @@ export async function cmdCapture(args: string[]): Promise<Envelope<unknown>> {
         'no_candidates',
         found
           ? `Nothing of kind ${kinds.join(', ')} on that page — it offers ${found}.`
-          : 'Nothing yoinkable on that page.',
+          : 'Nothing pluckable on that page.',
       )
     }
 
@@ -286,7 +286,7 @@ export function selectCandidates(
   candidates: readonly Candidate[],
   opts: {all?: boolean; best?: boolean},
 ): Candidate[] {
-  if (!candidates.length) throw new CommandError('no_candidates', 'Nothing yoinkable on that page.')
+  if (!candidates.length) throw new CommandError('no_candidates', 'Nothing pluckable on that page.')
   if (opts.all) return [...candidates]
 
   if (opts.best) {
@@ -303,7 +303,7 @@ export function selectCandidates(
   const offered = candidates.map(candidate => `${candidate.kind} “${truncate(candidate.label, 40)}”`).join(', ')
   throw new CommandError(
     'usage',
-    `That link offers ${candidates.length} things to yoink — ${offered}. ` +
+    `That link offers ${candidates.length} things to pluck — ${offered}. ` +
       'Narrow it with --kind, or take --best or --all.',
   )
 }
@@ -317,7 +317,7 @@ async function captureAll(
   const captured: CaptureRecord[] = []
   const skipped: Array<{label: string; reason: string}> = []
 
-  const outDir = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-capture-'))
+  const outDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pluck-capture-'))
   try {
     for (const candidate of chosen) {
       try {
@@ -466,7 +466,7 @@ export async function cmdShow(args: string[]): Promise<Envelope<unknown>> {
   return guard(async () => {
     const flags = parseFlags(args, {})
     const [id, ...extra] = flags.positional
-    if (!id) throw new CommandError('usage', 'yoinks show <id|sha256> — an id is required')
+    if (!id) throw new CommandError('usage', 'pluck show <id|sha256> — an id is required')
     if (extra.length) throw new CommandError('usage', 'show takes a single id')
     return itemPayload(await resolveItem(id))
   })
@@ -481,7 +481,7 @@ export async function cmdBoards(args: string[]): Promise<Envelope<unknown>> {
 
     if (verb === 'new') {
       const name = rest.join(' ').trim()
-      if (!name) throw new CommandError('usage', 'yoinks boards new <name> — a name is required')
+      if (!name) throw new CommandError('usage', 'pluck boards new <name> — a name is required')
       const key = boardKey(name)
       if (!key) throw new CommandError('usage', `“${name}” has no letters or numbers to make a board out of`)
 
@@ -516,10 +516,10 @@ export async function cmdTag(args: string[]): Promise<Envelope<unknown>> {
   return guard(async () => {
     const flags = parseFlags(args, {boolean: ['rm']})
     const [id, ...words] = flags.positional
-    if (!id) throw new CommandError('usage', 'yoinks tag <id> <tag>… — an id and at least one tag')
+    if (!id) throw new CommandError('usage', 'pluck tag <id> <tag>… — an id and at least one tag')
 
     const tags = words.map(tag => tag.trim()).filter(Boolean)
-    if (!tags.length) throw new CommandError('usage', 'yoinks tag <id> <tag>… — at least one tag')
+    if (!tags.length) throw new CommandError('usage', 'pluck tag <id> <tag>… — at least one tag')
 
     const item = await resolveItem(id)
     const has = (list: string[], tag: string) => list.some(held => held.toLowerCase() === tag.toLowerCase())
@@ -540,11 +540,11 @@ export async function cmdMv(args: string[]): Promise<Envelope<unknown>> {
   return guard(async () => {
     const flags = parseFlags(args, {single: ['board']})
     const [id, ...extra] = flags.positional
-    if (!id) throw new CommandError('usage', 'yoinks mv <id> --board <board> — an id is required')
+    if (!id) throw new CommandError('usage', 'pluck mv <id> --board <board> — an id is required')
     if (extra.length) throw new CommandError('usage', 'mv takes one id; name the board with --board')
 
     const name = oneOf(flags, 'board')
-    if (!name) throw new CommandError('usage', 'yoinks mv <id> --board <board> — --board is required')
+    if (!name) throw new CommandError('usage', 'pluck mv <id> --board <board> — --board is required')
     const key = boardKey(name)
     if (!key) throw new CommandError('usage', `“${name}” has no letters or numbers to make a board out of`)
 
@@ -559,10 +559,10 @@ export async function cmdNote(args: string[]): Promise<Envelope<unknown>> {
   return guard(async () => {
     const flags = parseFlags(args, {})
     const [id, ...words] = flags.positional
-    if (!id) throw new CommandError('usage', 'yoinks note <id> <text>… — an id is required')
+    if (!id) throw new CommandError('usage', 'pluck note <id> <text>… — an id is required')
 
     const note = words.join(' ').trim()
-    if (!note) throw new CommandError('usage', 'yoinks note <id> <text>… — the note text is required')
+    if (!note) throw new CommandError('usage', 'pluck note <id> <text>… — the note text is required')
 
     return itemPayload(await reviseItem(await resolveItem(id), {note}))
   })
@@ -571,7 +571,7 @@ export async function cmdNote(args: string[]): Promise<Envelope<unknown>> {
 export async function cmdRm(args: string[]): Promise<Envelope<unknown>> {
   return guard(async () => {
     const flags = parseFlags(args, {})
-    if (!flags.positional.length) throw new CommandError('usage', 'yoinks rm <id>… — at least one id')
+    if (!flags.positional.length) throw new CommandError('usage', 'pluck rm <id>… — at least one id')
 
     // every id resolves before anything is tombstoned, so a typo in the third
     // argument doesn't leave the first two deleted
@@ -698,7 +698,7 @@ function renderBoardCreated(data: Record<string, unknown>): string {
 function renderCapture(data: Record<string, unknown>): string {
   if (data.dryRun) {
     const candidates = (data.candidates ?? []) as Array<{kind: string; label: string; extractor: string}>
-    if (!candidates.length) return 'nothing yoinkable'
+    if (!candidates.length) return 'nothing pluckable'
     const rows = [
       ['kind', 'label', 'from'],
       ...candidates.map(candidate => [candidate.kind, truncate(candidate.label, 60), candidate.extractor]),
