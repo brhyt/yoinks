@@ -2,12 +2,23 @@ import React, {useEffect, useMemo, useState} from 'react'
 import {Box, Text} from 'ink'
 import {type Theme, useTheme} from '../theme.js'
 
-// Every row must be the same length: the sweep indexes GRID[0].length and
-// leans by row, so a ragged grid throws the beam off the letterforms.
+/**
+ * A duckling and an outline wordmark.
+ *
+ * The bird is built from shade characters rather than solid blocks so its
+ * body reads as volume instead of a silhouette, and the wordmark is a lighter
+ * outline weight so the two don't fight — the mark carries the density, the
+ * letters stay quiet.
+ *
+ * Every row must be the same length: the sweep indexes GRID[0].length and
+ * leans by row, so a ragged grid walks the beam off the letterforms.
+ */
 const ART = [
-  '█▀█ █   █ █ █▀▀ █ █',
-  '█▀▀ █   █ █ █   █▀▄',
-  '▀   ▀▀▀ ▀▀▀ ▀▀▀ ▀ ▀',
+  '  ▄▀▀▄                        ',
+  ' ▐░▒ ▀▄▖   ▛▀▜ ▌   ▌ ▌ ▛▀▘ ▌ ▖',
+  '▗▛▒▒▒▒▀    ▙▄▟ ▌   ▌ ▌ ▌   ▙▟ ',
+  '▐▒▒▓▓▒▒▒▖  ▌   ▙▄▖ ▙▄▟ ▙▄▖ ▌ ▝',
+  ' ▀▀▀▀▀▀▀                      ',
 ]
 const GRID = ART.map(line => [...line])
 const ROWS = GRID.length
@@ -20,10 +31,12 @@ const SWEEP_MS = 1000
 const SWEEP_EVERY_MS = 7_000
 const TILT = 2 // columns of lean per row — beam slants like /
 const HALF = 2.4 // beam half-width
-// full-cell blocks can swap to a lighter shade char; half-blocks (▀ ▄) must
-// keep their glyph or the effect spills outside the letterform — they dim instead
-const LIGHTER: Record<string, string> = {'█': '▒', '▓': '░'}
-const HALF_BLOCKS = new Set(['▀', '▄'])
+// Full-cell blocks can swap to a lighter shade char. Anything that only fills
+// part of its cell — half blocks, quadrants, the outline strokes — must keep
+// its glyph or the beam spills outside the shape it's supposed to be crossing.
+// Those dim instead.
+const LIGHTER: Record<string, string> = {'█': '▒', '▓': '░', '▒': '░'}
+const PARTIAL = new Set(['▀', '▄', '▌', '▐', '▖', '▗', '▘', '▝', '▙', '▛', '▜', '▟'])
 
 const ease = (t: number) => 1 - Math.pow(1 - t, 3)
 
@@ -34,8 +47,8 @@ function cellAt(ch: string, row: number, col: number, phase: Phase, t: number, d
   if (phase === 'intro') {
     const dt = t - delay
     if (dt < 0) return {ch: ' ', color: theme.primary, dim: false}
-    if (dt < 110) return {ch: HALF_BLOCKS.has(ch) ? ch : '░', color: theme.gray, dim: theme.dimSecondary}
-    if (dt < 220) return {ch: HALF_BLOCKS.has(ch) ? ch : '▒', color: theme.gray, dim: theme.dimSecondary}
+    if (dt < 110) return {ch: PARTIAL.has(ch) ? ch : '░', color: theme.gray, dim: theme.dimSecondary}
+    if (dt < 220) return {ch: PARTIAL.has(ch) ? ch : '▒', color: theme.gray, dim: theme.dimSecondary}
     return {ch, color: theme.primary, dim: false}
   }
   // sweep — beam position leans right as it climbs, only glyphs are touched
@@ -45,7 +58,7 @@ function cellAt(ch: string, row: number, col: number, phase: Phase, t: number, d
   const p = pMin + ease(t / SWEEP_MS) * (pMax - pMin)
   const d = Math.abs(col - (ROWS - 1 - row) * TILT - p)
   if (d <= HALF && 1 - d / HALF > 0.35) {
-    if (HALF_BLOCKS.has(ch)) return {ch, color: theme.gray, dim: theme.dimSecondary}
+    if (PARTIAL.has(ch)) return {ch, color: theme.gray, dim: theme.dimSecondary}
     return {ch: LIGHTER[ch] ?? ch, color: theme.primary, dim: false}
   }
   return {ch, color: theme.primary, dim: false}
@@ -101,7 +114,7 @@ export function Logo() {
   }, [phase, animated])
 
   return (
-    // flexShrink=0 — the logo must keep its 3 rows even when a phase's
+    // flexShrink=0 — the logo must keep all its rows even when a phase's
     // content would overflow the screen, or yoga crushes it first
     <Box flexDirection="column" flexShrink={0}>
       {GRID.map((_, row) => (
