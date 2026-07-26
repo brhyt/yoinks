@@ -378,3 +378,34 @@ test('brief refuses the flags it cannot honestly answer, and throws for nothing 
     assert.equal((await cmdBrief(['--json', '--limit', '3'])).ok, true)
   })
 })
+
+test('a board of many references still yields a readable palette', () => {
+  // five real references fused to 38 entries before the cap existed. That is a
+  // colour dump, not direction — an agent handed 38 hexes has learned nothing.
+  const references = Array.from({length: 6}, (_, ref) =>
+    Array.from({length: 8}, (_, i) => ({
+      // deliberately spread so the conservative cross-reference merge keeps them apart
+      hex: `#${(17 * ref + 3).toString(16).padStart(2, '0')}${(29 * i + 7).toString(16).padStart(2, '0')}a0`,
+      weight: 1 / 8,
+    })),
+  )
+
+  const fused = fusePalettes(references)
+  assert.ok(fused.length <= 8, `expected at most 8 entries, got ${fused.length}`)
+  assert.ok(Math.abs(fused.reduce((sum, e) => sum + e.weight, 0) - 1) < 0.01, 'weights still sum to 1')
+  assert.deepEqual(fusePalettes(references), fused, 'the cap must not cost determinism')
+})
+
+test('the cap keeps the accent a frequency sort would drop', () => {
+  // a heavy grey field plus one small, loud colour — the accent is usually the
+  // whole point of a reference and weight alone discards it first
+  const greys = Array.from({length: 9}, (_, i) => ({hex: `#${(40 + i * 6).toString(16)}${(40 + i * 6).toString(16)}${(40 + i * 6).toString(16)}`, weight: 0.11}))
+  const fused = fusePalettes([[...greys, {hex: '#ff00ff', weight: 0.01}]])
+
+  assert.ok(fused.length <= 8)
+  const chroma = (hex: string) => {
+    const [r, g, b] = [1, 3, 5].map(at => Number.parseInt(hex.slice(at, at + 2), 16))
+    return Math.max(r!, g!, b!) - Math.min(r!, g!, b!)
+  }
+  assert.ok(fused.some(e => chroma(e.hex) > 150), `the loud colour survived: ${fused.map(e => e.hex).join(' ')}`)
+})

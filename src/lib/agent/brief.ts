@@ -27,6 +27,9 @@ import {CommandError, envelopeFor, ok, type Envelope} from './json.js'
 
 const DEFAULT_LIMIT = 8
 
+/** A brief is direction, not an inventory. Past this it stops being readable. */
+const MAX_BRIEF_COLORS = 8
+
 /**
  * Two entries closer than this are the same color across references.
  *
@@ -78,7 +81,11 @@ type Cluster = {r: number; g: number; b: number; weight: number}
  * merged greedily, so the result depends on the multiset of inputs and on
  * nothing else — not on which reference came back first.
  */
-export function fusePalettes(palettes: PaletteEntry[][], mergeDistance: number = FUSE_DISTANCE): BriefPalette[] {
+export function fusePalettes(
+  palettes: PaletteEntry[][],
+  mergeDistance: number = FUSE_DISTANCE,
+  maxColors: number = MAX_BRIEF_COLORS,
+): BriefPalette[] {
   const pooled: Array<{rgb: Rgb; hex: string; weight: number}> = []
 
   for (const palette of palettes ?? []) {
@@ -112,10 +119,40 @@ export function fusePalettes(palettes: PaletteEntry[][], mergeDistance: number =
     near.weight = weight
   }
 
-  const total = clusters.reduce((sum, cluster) => sum + cluster.weight, 0)
-  return clusters
+  clusters.sort((a, b) => b.weight - a.weight || compare(formatHex([a.r, a.g, a.b]), formatHex([b.r, b.g, b.b])))
+
+  // Cap the report. Merging across references is deliberately conservative —
+  // it would rather keep two designers' near-identical choices apart than
+  // average them into a colour neither one used — so a board of five refs
+  // fuses to ~38 entries. That is a colour dump, not direction: an agent
+  // handed 38 hexes has learned nothing it can act on. Keep the heaviest few,
+  // plus the most chromatic one, since a 4% accent is routinely the whole
+  // point of a reference and weight alone would drop it first.
+  const kept = clusters.slice(0, maxColors)
+  const accent = mostChromatic(clusters)
+  if (accent && !kept.includes(accent)) kept[kept.length - 1] = accent
+
+  // renormalize over what is actually reported, so the weights still sum to 1
+  const total = kept.reduce((sum, cluster) => sum + cluster.weight, 0)
+  if (total <= 0) return []
+
+  return kept
     .map(cluster => ({hex: formatHex([cluster.r, cluster.g, cluster.b]), weight: round(cluster.weight / total)}))
     .sort((a, b) => b.weight - a.weight || compare(a.hex, b.hex))
+}
+
+/** Widest rgb spread — the colour a frequency sort throws away first. */
+function mostChromatic(clusters: Cluster[]): Cluster | undefined {
+  let best: Cluster | undefined
+  let bestChroma = -1
+  for (const cluster of clusters) {
+    const chroma = Math.max(cluster.r, cluster.g, cluster.b) - Math.min(cluster.r, cluster.g, cluster.b)
+    if (chroma > bestChroma) {
+      bestChroma = chroma
+      best = cluster
+    }
+  }
+  return best
 }
 
 // --- roles ------------------------------------------------------------------
