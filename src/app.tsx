@@ -21,6 +21,7 @@ import {probeUrl} from './lib/extract/index.js'
 import type {Candidate, FetchProgress, Kind} from './lib/extract/types.js'
 import {deriveBlob} from './lib/store/derive.js'
 import {ingest} from './lib/store/ingest.js'
+import {LibraryScreen} from './components/library.js'
 import fs from 'node:fs/promises'
 
 const OUT_DIR = path.join(os.homedir(), 'Downloads')
@@ -108,6 +109,7 @@ function indeterminateMeta(progress: FetchProgress): string {
 export type Outcome = {filepath?: string}
 
 type Phase =
+  | {name: 'library'}
   | {name: 'input'; warning?: string}
   | {name: 'probing'; status: string}
   | {name: 'picking'}
@@ -122,8 +124,16 @@ type Phase =
   | {name: 'error'; message: string}
 
 const HINTS: Record<Phase['name'], Array<[string, string]>> = {
+  library: [
+    ['hjkl', 'move'],
+    ['/', 'search'],
+    ['↵', 'open'],
+    ['esc', 'back'],
+    ['^c', 'quit'],
+  ],
   input: [
     ['↵', 'yoink'],
+    ['l', 'library'],
     ['^c', 'quit'],
   ],
   probing: [
@@ -151,6 +161,8 @@ type AppProps = {
   initialUrl?: string
   clipboardUrl?: string
   initialThemeMode?: ThemeMode
+  /** start in the library rather than at the paste box (`yoinks lib`) */
+  startInLibrary?: boolean
   onOutcome: (outcome: Outcome) => void
 }
 
@@ -170,11 +182,13 @@ export function App({initialThemeMode = 'auto', ...props}: AppProps) {
 function AppContent({
   initialUrl,
   clipboardUrl,
+  startInLibrary,
   onOutcome,
   cycleTheme,
 }: {
   initialUrl?: string
   clipboardUrl?: string
+  startInLibrary?: boolean
   onOutcome: (outcome: Outcome) => void
   cycleTheme: () => void
 }) {
@@ -191,7 +205,10 @@ function AppContent({
   // and a late arrival must not move the selection under someone's finger
   const highlightKeyRef = useRef('')
   const abortRef = useRef<AbortController | undefined>(undefined)
-  const [phase, setPhase] = useState<Phase>(initialUrl ? {name: 'probing', status: 'warming up…'} : {name: 'input'})
+  const [phase, setPhase] = useState<Phase>(
+    initialUrl ? {name: 'probing', status: 'warming up…'} : startInLibrary ? {name: 'library'} : {name: 'input'},
+  )
+  const [libraryTargets, setLibraryTargets] = useState<ClickTarget[]>([])
 
   const columns = stdout?.columns && stdout.columns > 0 ? stdout.columns : 80
   const boxWidth = Math.max(14, Math.min(64, columns - 6))
@@ -263,6 +280,10 @@ function AppContent({
     (input, key) => {
       if (key.ctrl && input === 't') {
         cycleTheme()
+        return
+      }
+      if (input === 'l' && phase.name === 'input' && urlInput === '') {
+        setPhase({name: 'library'})
         return
       }
       if (key.escape && (phase.name === 'picking' || phase.name === 'error' || phase.name === 'done')) resetToInput()
@@ -379,6 +400,9 @@ function AppContent({
   if (phase.name === 'done') {
     clickTargets.push({match: DONE_LABEL, padX: 4, padY: 1, action: resetToInput})
   }
+  // the grid renders as a wall of identical half-blocks, so it registers its own
+  // cell rectangles rather than relying on frame-text matching
+  if (phase.name === 'library') clickTargets.push(...libraryTargets)
   for (const [key, label] of hints) {
     const action = hintAction(key)
     if (action) clickTargets.push({match: `${key} ${label}`, action})
@@ -408,6 +432,16 @@ function AppContent({
       <Text color={theme.primary}>{TAGLINE}</Text>
       <Text color={theme.gray} dimColor={theme.dimSecondary}>youtube · x · instagram · threads · tiktok · +1800 more</Text>
       <Gap />
+
+      {phase.name === 'library' && (
+        <LibraryScreen
+          isActive
+          columns={columns}
+          rows={Math.max(6, (stdout?.rows ?? 24) - 12)}
+          onExit={resetToInput}
+          onClickTargets={setLibraryTargets}
+        />
+      )}
 
       {phase.name === 'input' && (
         <Box flexDirection="column" alignItems="center">

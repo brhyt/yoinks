@@ -40,7 +40,7 @@ export function captureFrames<T extends NodeJS.WriteStream>(stream: T): T {
   })
 }
 
-export type ClickTarget = {
+export type TextTarget = {
   /** exact text to find in the frame (colors are stripped before matching) */
   match: string
   action: () => void
@@ -50,10 +50,35 @@ export type ClickTarget = {
   padY?: number
 }
 
-/** First target whose text sits under the click. x/y are 1-based terminal cells. */
+/**
+ * An explicit cell rectangle, 1-based and inclusive of its origin.
+ *
+ * Matching by frame text is the default because it needs no layout math, and
+ * it cannot work for a thumbnail grid: every cell renders as the same `▀`, so
+ * the text of cell 3 is indistinguishable from cell 9. A component that knows
+ * its own geometry registers rectangles instead.
+ */
+export type RectTarget = {
+  rect: [x: number, y: number, width: number, height: number]
+  action: () => void
+}
+
+export type ClickTarget = TextTarget | RectTarget
+
+const isRect = (target: ClickTarget): target is RectTarget => 'rect' in target
+
+/** First target under the click. x/y are 1-based terminal cells. */
 export function clickTargetAt(x: number, y: number, targets: ClickTarget[]): ClickTarget | undefined {
   for (const target of targets) {
+    if (isRect(target)) {
+      const [left, top, width, height] = target.rect
+      if (width <= 0 || height <= 0) continue
+      if (x >= left && x <= left + width - 1 && y >= top && y <= top + height - 1) return target
+      continue
+    }
+
     const {match, padX = 1, padY = 0} = target
+    if (!match) continue
     for (let row = y - 1 - padY; row <= y - 1 + padY; row++) {
       const line = frameLines[row]
       if (!line) continue

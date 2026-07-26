@@ -80,10 +80,9 @@ async function decodeOnce(
   signal?: AbortSignal,
   fit: Fit = 'pad',
 ): Promise<Buffer | undefined> {
-  const filter =
-    fit === 'stretch'
-      ? `scale=${w}:${h}`
-      : `scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2:color=0x000000`
+  const fitted = `scale=${w}:${h}:force_original_aspect_ratio=decrease`
+  const bars = `pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2:color=0x000000`
+  const filter = fit === 'stretch' ? `scale=${w}:${h}` : `${fitted},${bars}`
   const args = ['-v', 'error']
   if (seek) args.push('-ss', seek)
   args.push('-i', file, '-vf', filter, '-frames:v', '1')
@@ -127,9 +126,12 @@ const MERGE_DISTANCE = 25
  * hexes to an agent as the reference's own colours.
  *
  * Walks outward from the median and takes the first real boundary, lower side
- * first, so the result stays deterministic. Falls back to the median when the
- * bucket is flat on this channel, which leaves the old behaviour intact for
- * gradients — the case plain median cut is genuinely good at.
+ * first, so the result stays deterministic. The search range is 1..length-1, so
+ * neither partition can come back empty; the median return is unreachable belt
+ * and braces, since `widest()` only offers a bucket that spans two values on
+ * this channel. Gradients are untouched — when every neighbour already differs,
+ * the median is itself a boundary, so the case plain median cut is good at
+ * behaves exactly as before.
  */
 function boundaryNear(pixels: number[], rgb: Buffer, channel: number): number {
   const valueAt = (at: number) => rgb[pixels[at]! * 3 + channel]!

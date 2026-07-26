@@ -6,9 +6,9 @@ import path from 'node:path'
 import {Readable} from 'node:stream'
 import {pipeline} from 'node:stream/promises'
 import {formatBytes} from './format.js'
+import {binDir} from './store/paths.js'
 
-const YOINKS_DIR = path.join(os.homedir(), '.yoinks', 'bin')
-const RELEASE_BASE = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download'
+const RELEASE_BASE ='https://github.com/yt-dlp/yt-dlp/releases/latest/download'
 
 function ytDlpAssetName(): string {
   if (process.platform === 'win32') return 'yt-dlp.exe'
@@ -39,11 +39,13 @@ function commandWorks(cmd: string, args: string[]): Promise<boolean> {
 export async function ensureYtDlp(onStatus: (message: string) => void, signal?: AbortSignal): Promise<string> {
   if (await commandWorks('yt-dlp', ['--version'])) return 'yt-dlp'
 
-  const local = path.join(YOINKS_DIR, process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp')
+  // binDir() rather than a hardcoded ~/.yoinks/bin, so $YOINKS_HOME sends the
+  // binary to the same place the rest of the app looks for it
+  const local = path.join(binDir(), process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp')
   if (await commandWorks(local, ['--version'])) return local
 
   onStatus('first run: fetching yt-dlp…')
-  await fs.mkdir(YOINKS_DIR, {recursive: true})
+  await fs.mkdir(binDir(), {recursive: true})
 
   const url = `${RELEASE_BASE}/${ytDlpAssetName()}`
   const response = await fetch(url, {signal})

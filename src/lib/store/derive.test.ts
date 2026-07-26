@@ -64,9 +64,61 @@ test('a tiny accent survives the cull that drops an equally tiny grey', () => {
 
   assert.equal(palette.length, 2)
   assert.equal(palette[0]!.hex, '#ffffff')
+  assert.equal(palette[1]!.hex, '#ff00ff') // the accent's own colour, not a blend of it
   assert.ok(palette[1]!.weight < MIN_WEIGHT, `accent kept its small weight, got ${palette[1]!.weight}`)
   assert.ok(chroma(palette[1]!.hex) > 150, `accent stayed chromatic, got ${palette[1]!.hex}`)
   assert.equal(palette.some(entry => chroma(entry.hex) === 0 && entry.weight < MIN_WEIGHT), false)
+})
+
+test('flat-colour art yields only colours that are actually in it', () => {
+  // logos, ui screenshots and vector work are mostly flat colour, and cutting at
+  // the median index used to average across a boundary and invent a blend — this
+  // buffer reported a #cc0033 that is in none of its pixels. `yoinks brief`
+  // hands these hexes to an agent as the reference's own colours, so an invented
+  // one is worse than a missing one.
+  const palette = paletteFromRgb(rgbBuffer([[255, 0, 0, 600], [0, 255, 0, 300], [0, 0, 255, 100]]))
+  const present = new Set(['#ff0000', '#00ff00', '#0000ff'])
+
+  for (const entry of palette) {
+    assert.ok(present.has(entry.hex), `invented ${entry.hex}, which is in no pixel of the source`)
+  }
+  assert.deepEqual(
+    palette.map(entry => [entry.hex, Number(entry.weight.toFixed(3))]),
+    [['#ff0000', 0.6], ['#00ff00', 0.3], ['#0000ff', 0.1]],
+  )
+})
+
+test('a hard boundary between two tones yields those two tones and nothing between', () => {
+  // 700/300 rather than an even split, whose median lands on the boundary
+  // anyway. Both budgets matter: with eight buckets to spend, even an unsnapped
+  // cut eventually isolates two colours and the merge step tidies up after it.
+  // Narrow the budget and there is nowhere to recover — this is the shape that
+  // actually separates a boundary cut from a median one.
+  const twoTone = rgbBuffer([[10, 20, 30, 700], [200, 190, 180, 300]])
+  const tones = [
+    {hex: '#0a141e', weight: 0.7},
+    {hex: '#c8beb4', weight: 0.3},
+  ]
+
+  assert.deepEqual(paletteFromRgb(twoTone), tones)
+  assert.deepEqual(paletteFromRgb(twoTone, 3), tones)
+  assert.deepEqual(paletteFromRgb(twoTone, 2), tones)
+})
+
+test('a gradient still averages into sensible buckets', () => {
+  // snapping must not break what plain median cut is good at: here every
+  // neighbouring pixel differs, so the median is already a boundary
+  const ramp: Array<[number, number, number, number]> = []
+  for (let value = 0; value < 256; value++) ramp.push([value, value, value, 16])
+  const palette = paletteFromRgb(rgbBuffer(ramp))
+
+  assert.ok(palette.length >= 4 && palette.length <= 8, `got ${palette.length} buckets`)
+  assert.ok(Math.abs(palette.reduce((sum, entry) => sum + entry.weight, 0) - 1) < 1e-9)
+  // averaging a grey ramp must not invent a hue, and the palette should still
+  // reach both ends of it rather than collapsing to the middle
+  for (const entry of palette) assert.equal(chroma(entry.hex), 0, entry.hex)
+  const luminance = palette.map(entry => Number.parseInt(entry.hex.slice(1, 3), 16))
+  assert.ok(Math.min(...luminance) < 60 && Math.max(...luminance) > 195, JSON.stringify(palette))
 })
 
 test('entries come back heaviest first and sum to one', () => {
@@ -233,7 +285,8 @@ test('a wide image gets no black from letterboxing', async t => {
   try {
     const wide = path.join(dir, 'wide.png')
     // 6:1, the shape a banner or a hero screenshot actually is
-    await ffmpegRaw(ffmpeg, ['-v', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=blue:s=192x32', '-frames:v', '1', wide])
+    const args = ['-v', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=blue:s=192x32', '-frames:v', '1', wide]
+    await ffmpegRaw(ffmpeg, args)
 
     const padded = await decodeRgb(wide, 64, 64, undefined, 'pad')
     const stretched = await decodeRgb(wide, 64, 64, undefined, 'stretch')
@@ -255,33 +308,3 @@ test('a wide image gets no black from letterboxing', async t => {
   }
 })
 
-test('flat-colour art yields only colours that are actually in it', () => {
-  // logos, ui screenshots and vector work are mostly flat colour, and cutting
-  // at the median index used to average across a boundary and invent a blend.
-  // brief() hands these hexes to an agent as the reference's own colours, so an
-  // invented one is worse than a missing one.
-  const palette = paletteFromRgb(rgbBuffer([[255, 0, 0, 600], [0, 255, 0, 300], [0, 0, 255, 100]]))
-  const present = new Set(['#ff0000', '#00ff00', '#0000ff'])
-
-  for (const entry of palette) {
-    assert.ok(present.has(entry.hex), `invented ${entry.hex}, which is in no pixel of the source`)
-  }
-  assert.deepEqual(
-    palette.map(entry => [entry.hex, Number(entry.weight.toFixed(3))]),
-    [['#ff0000', 0.6], ['#00ff00', 0.3], ['#0000ff', 0.1]],
-  )
-})
-
-test('a hard two-tone boundary stays two tones', () => {
-  const palette = paletteFromRgb(rgbBuffer([[10, 10, 10, 500], [250, 250, 250, 500]]))
-  assert.deepEqual(palette.map(entry => entry.hex).sort(), ['#0a0a0a', '#fafafa'])
-})
-
-test('a gradient still buckets sensibly — snapping must not break the smooth case', () => {
-  const runs: Array<[number, number, number, number]> = []
-  for (let level = 0; level < 256; level += 4) runs.push([level, level, level, 4])
-  const palette = paletteFromRgb(rgbBuffer(runs))
-
-  assert.ok(palette.length > 1 && palette.length <= 8, `expected a handful of buckets, got ${palette.length}`)
-  assert.ok(Math.abs(palette.reduce((sum, entry) => sum + entry.weight, 0) - 1) < 1e-9)
-})

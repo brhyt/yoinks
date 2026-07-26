@@ -16,18 +16,24 @@ const HELP = `
 
   Usage
     $ yoinks [url]
+    $ yoinks <command>
 
   Examples
     $ yoinks https://youtu.be/dQw4w9WgXcQ
-    $ yoinks https://x.com/user/status/123456
+    $ yoinks https://dribbble.com/shots/…
     $ yoinks                 (prompts for a url)
+
+  Commands
+    lib [query]     browse your library
+    doctor          report what's available on this machine
 
   Options
     --theme <mode>  use auto, light, or dark for this run
     -h, --help      show this help
     -v, --version   show version
 
-  Downloads are saved to ~/Downloads.
+  Captures land in your library (~/.yoinks). Video and audio are also
+  saved to ~/Downloads.
   Powered by yt-dlp — YouTube, X, Instagram, Threads, TikTok & 1800+ sites.
 `
 
@@ -45,6 +51,12 @@ if (args.help) {
 
 if (args.version) {
   console.log(VERSION)
+  process.exit(0)
+}
+
+if (args.command === 'doctor') {
+  const {doctor, formatDoctor} = await import('./lib/render/caps.js')
+  console.log(formatDoctor(await doctor()))
   process.exit(0)
 }
 
@@ -85,6 +97,7 @@ const {waitUntilExit} = render(
     initialUrl={initialUrl}
     clipboardUrl={clipboardUrl}
     initialThemeMode={initialThemeMode}
+    startInLibrary={args.command === 'lib'}
     onOutcome={result => (outcome = result)}
   />,
   // keep a copy of every frame so clicks can be hit-tested against it
