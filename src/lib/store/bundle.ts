@@ -7,7 +7,7 @@ import type {Readable, Writable} from 'node:stream'
 import {pipeline} from 'node:stream/promises'
 import {createGunzip, createGzip} from 'node:zlib'
 import {CommandError, envelopeFor, ok, type Envelope} from '../agent/json.js'
-import {boardKey} from './ingest.js'
+import {boardKey, ensureBoard} from './ingest.js'
 import {append, readRecords, replay} from './log.js'
 import {blobDir, blobMetaPath, ensureLibrary, findOriginal, libraryDir} from './paths.js'
 import {scoreItem, type Filters} from './query.js'
@@ -158,22 +158,15 @@ const READ_AHEAD = 64 * 1024
  * Pull-based bytes over a gzipped source, so an entry body can be handed on in
  * pieces rather than buffered whole.
  *
- * Two things here are deliberate and neither is obvious.
+ * Backpressure is applied by holding back the compressed input rather than by
+ * pausing the decoded side. Both bound memory, but a paused zlib stream holds
+ * what it has already decoded in an internal buffer and drops that buffer if it
+ * later errors — so pausing would lose the tail of a perfectly good archive on
+ * the way to reporting a problem that came after it.
  *
- * The gunzip stream is *never* paused. Backpressure is applied by holding back
- * the compressed input instead, which bounds memory just the same. Pausing the
- * decoded side would be the natural way to do it and it silently loses data: a
- * paused stream buffers what it decoded internally, and zlib throws that buffer
- * away when it errors.
- *
- * That matters because decoded bytes must beat a pending error. A tar ends at
- * its end-of-archive marker, and `yoinks export > refs.yoink` leaves the shell
- * the envelope the cli prints afterwards, sitting past that marker. zlib
- * decodes the whole archive and only then objects to the trailing bytes, so
- * queueing everything as it arrives means the bundle reads and the complaint
- * about bytes that were never part of it is never reached — which is exactly
- * what `tar tzf` does with the same file. An error still surfaces the moment
- * the queue runs dry, so a genuinely truncated bundle is still an error.
+ * A stored error is only raised once the queue runs dry, for the same reason:
+ * bytes we already hold are answers, and a tar that has reached its
+ * end-of-archive marker has nothing left to ask for.
  */
 function byteReader(input: NodeJS.ReadableStream): Reader {
   const gunzip = createGunzip()
@@ -497,6 +490,17 @@ export async function importBundle(
       }
       // records last, so every blob an item points at is already in place
       for (const record of pending) await append(record)
+
+      // boards.json doesn't travel in the bundle, so recreate any board the
+      // imported items claim membership of. Without this, sharing a board —
+      // the whole point of a bundle — lands the items but leaves `yoinks
+      // boards` empty, and the board is invisible to everything that lists
+      // them. Existing boards are untouched: ensureBoard is idempotent.
+      const boards = new Set<string>()
+      for (const record of pending) {
+        if (record.op === 'put') for (const board of record.boards ?? []) boards.add(board)
+      }
+      for (const board of boards) await ensureBoard(board)
     }
 
     return {items: pending.length, blobs: written, skipped: incoming.length - pending.length + held}

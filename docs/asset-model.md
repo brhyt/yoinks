@@ -247,6 +247,11 @@ Import replays the log and merges by the rules above, so importing the same
 bundle twice is a no-op and importing a friend's board never clobbers your
 notes on a shared image — different ids, same blob.
 
+`boards.json` is deliberately not in the bundle: board metadata is local
+(your note on why a board exists is yours). Import instead recreates any
+board the incoming items claim membership of, so a shared board is visible
+on the receiving side without carrying the sender's notes about it.
+
 ## Backup
 
 The library is files, so it backs up with anything. Two facts worth knowing:

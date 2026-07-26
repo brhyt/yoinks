@@ -7,7 +7,7 @@ import path from 'node:path'
 import {Readable, Writable} from 'node:stream'
 import test from 'node:test'
 import {cmdExport, cmdImport, exportBundle, importBundle, type Manifest} from './bundle.js'
-import {ingest, type IngestInput} from './ingest.js'
+import {ingest, loadBoards, type IngestInput} from './ingest.js'
 import {deleteItem, loadItems} from './log.js'
 import {blobDir, blobsDir, findOriginal, itemsLogPath} from './paths.js'
 import {isoNow, type Item} from './types.js'
@@ -426,6 +426,96 @@ test('a bundle round-trips through real files, not just memory streams', async (
     assert.equal(second.items, 0)
     assert.equal(second.blobs, 0)
     assert.equal((await loadItems()).length, 1)
+  } finally {
+    if (previous === undefined) delete process.env.YOINKS_HOME
+    else process.env.YOINKS_HOME = previous
+    for (const dir of [source, target, work]) await fs.rm(dir, {recursive: true, force: true})
+  }
+})
+
+test('a bundle that goes bad mid-blob rejects instead of taking the process down', async () => {
+  // The crash this guards: a decode error lands while a blob's write stream
+  // still has queued writes, the sink is destroyed, and the queued fs write
+  // then emits ERR_STREAM_DESTROYED on a stream nobody is listening to — an
+  // uncaught exception rather than a failed import. It needs a real file and a
+  // blob big enough to still be in flight, so an in-memory stream never sees it.
+  const work = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-bad-'))
+  try {
+    const bundlePath = path.join(work, 'refs.yoink')
+
+    await withHome(async () => {
+      const big = Buffer.alloc(400_000)
+      for (let at = 0; at < big.length; at++) big[at] = (at * 7) % 251
+      const arrived = path.join(work, 'big.png')
+      await fs.writeFile(arrived, big)
+      await ingest(capture(arrived))
+
+      const sink = createWriteStream(bundlePath)
+      await exportBundle({}, sink)
+      sink.end()
+      await once(sink, 'close')
+    })
+
+    // truncate deep inside the last blob rather than at a tidy boundary
+    const whole = await fs.readFile(bundlePath)
+    await fs.writeFile(bundlePath, whole.subarray(0, whole.length - 20_000))
+
+    await withHome(async home => {
+      const mine = await ingest(capture(await incoming(home, 'mine.png', 'my pixels'), {note: 'untouched'}))
+
+      await assert.rejects(importBundle(createReadStream(bundlePath)), /bundle/)
+
+      const items = await loadItems()
+      assert.equal(items.length, 1, 'the failed import must not have applied anything')
+      assert.equal(items[0]!.note, 'untouched')
+      assert.deepEqual(Object.keys(await storedBlobs()), [mine.sha256])
+      const stray = (await fs.readdir(path.join(home, 'library'))).filter(entry => entry.startsWith('.importing'))
+      assert.deepEqual(stray, [], 'no staged blob left behind')
+    })
+  } finally {
+    await fs.rm(work, {recursive: true, force: true})
+  }
+})
+
+test('an imported board is recreated, not just referenced', async () => {
+  // boards.json doesn't travel in the bundle. Without recreating it on import,
+  // sharing a board — the entire point of a bundle — lands the items while
+  // `yoinks boards` stays empty and the board is invisible.
+  const source = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-bd-src-'))
+  const target = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-bd-dst-'))
+  const work = await fs.mkdtemp(path.join(os.tmpdir(), 'yoinks-bd-work-'))
+  const previous = process.env.YOINKS_HOME
+
+  try {
+    const incoming = path.join(work, 'a.png')
+    await fs.writeFile(incoming, 'pixels')
+
+    process.env.YOINKS_HOME = source
+    await ingest({
+      path: incoming,
+      kind: 'image',
+      mime: 'image/png',
+      source: {url: 'https://example.com/a.png'},
+      boards: ['hero refs'],
+    })
+
+    const chunks: Buffer[] = []
+    const sink = new Writable({
+      write(chunk, _encoding, done) {
+        chunks.push(chunk as Buffer)
+        done()
+      },
+    })
+    await exportBundle({}, sink)
+
+    process.env.YOINKS_HOME = target
+    await importBundle(Readable.from(Buffer.concat(chunks)))
+
+    const item = (await loadItems())[0]
+    assert.deepEqual(item?.boards, ['hero-refs'], 'the item keeps its board key')
+
+    const boards = await loadBoards()
+    assert.ok(boards['hero-refs'], 'the board itself must exist on the receiving side')
   } finally {
     if (previous === undefined) delete process.env.YOINKS_HOME
     else process.env.YOINKS_HOME = previous
