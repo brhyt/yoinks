@@ -263,12 +263,14 @@ attribution is never more than one command away.
 
 ## Credits
 
-pluck is built on [yoinks](https://github.com/pablostanley/yoinks) by
-**Pablo Stanley**, and keeps its terminal UI, its terminal-aware themes, its
-mouse handling, and its yt-dlp capture path — the parts that made it a
-pleasure to use before it was a library. The extractor registry, the
-content-addressed store, the terminal image rendering and the agent surface
-are new; everything under them is his.
+**Plucked from [yoinks](https://github.com/pablostanley/yoinks), by Pablo
+Stanley.**
+
+The terminal UI, the terminal-aware themes, the mouse handling and the yt-dlp
+capture path are all his — the parts that made this a pleasure to use before
+it was a library. The extractor registry, the content-addressed store, the
+terminal image rendering and the agent surface are new; everything they stand
+on isn't.
 
 yoinks is MIT licensed, and so is this.
 
