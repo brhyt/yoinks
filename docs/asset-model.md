@@ -116,8 +116,17 @@ resurrecting when a future sync replays an older log.
 
 ### Blob meta
 
-`blobs/<aa>/<sha256>/meta.json`. Entirely derived — delete it and the next
-derivation pass rebuilds it identically.
+`blobs/<aa>/<sha256>/meta.json`. Almost entirely derived: `width`, `height`,
+`duration`, `palette` and `fonts` are recomputed from the bytes at any time,
+so deleting them costs nothing but a re-derive.
+
+Two fields are not. `kind` and `mime` come from the *extractor* that captured
+the blob and cannot be recovered from the pixels — a `.json` file is a palette
+or a snippet depending on who made it. So a lost `meta.json` is not
+self-healing from the blob alone. Ingest covers this by writing meta whenever
+it is **absent**, including on a dedupe hit, and never overwriting one that
+exists (it may already hold derived data). Capturing the same bytes again is
+therefore also the repair path.
 
 ```json
 {

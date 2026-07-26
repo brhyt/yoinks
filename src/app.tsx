@@ -19,6 +19,9 @@ import {useMouseClick} from './lib/use-mouse-click.js'
 import {nextThemeMode, ThemeProvider, type ThemeMode, useTheme} from './theme.js'
 import {probeUrl} from './lib/extract/index.js'
 import type {Candidate, FetchProgress, Kind} from './lib/extract/types.js'
+import {deriveBlob} from './lib/store/derive.js'
+import {ingest} from './lib/store/ingest.js'
+import fs from 'node:fs/promises'
 
 const OUT_DIR = path.join(os.homedir(), 'Downloads')
 const YOINK_BUTTON = 'yoink'
@@ -38,6 +41,14 @@ const GLYPH: Record<Kind, string> = {
 }
 
 const candidateLabel = (candidate: Candidate) => `${GLYPH[candidate.kind]}${candidate.label}`
+
+const hostOf = (url: string): string | undefined => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return undefined
+  }
+}
 
 /** Page <title>, for the header on captures that aren't videos. */
 function titleFromHtml(html: string | undefined): string | undefined {
@@ -281,10 +292,16 @@ function AppContent({
     setPhase({name: 'downloading', candidate, processing: false})
 
     void (async () => {
+      // video and audio still land in ~/Downloads — that's what people
+      // installed a video downloader for. Everything else goes straight to the
+      // library rather than cluttering the folder.
+      const keepsFile = candidate.kind === 'video' || candidate.kind === 'audio'
+      const outDir = keepsFile ? OUT_DIR : path.join(os.tmpdir(), `yoinks-${process.pid}`)
+
       try {
-        const {path: filepath} = await candidate.fetch(
+        const fetched = await candidate.fetch(
           {
-            outDir: OUT_DIR,
+            outDir,
             onProgress: progress =>
               setPhase(prev => (prev.name === 'downloading' ? {...prev, progress, processing: false} : prev)),
             onStatus: status =>
@@ -294,6 +311,30 @@ function AppContent({
           },
           controller.signal,
         )
+
+        setPhase(prev =>
+          prev.name === 'downloading'
+            ? {...prev, processing: true, status: 'adding to your library…', progress: undefined}
+            : prev,
+        )
+        const stored = await ingest({
+          path: fetched.path,
+          kind: candidate.kind,
+          mime: fetched.mime ?? candidate.hint?.mime,
+          source: {
+            url,
+            site: hostOf(url),
+            title: subject.title ?? candidate.hint?.title,
+            extractor: candidate.extractor,
+          },
+        })
+
+        // derivation is a nice-to-have and must never block or fail a capture
+        // that already succeeded
+        void deriveBlob(stored.sha256).catch(() => {})
+        if (!keepsFile) await fs.rm(fetched.path, {force: true})
+
+        const filepath = keepsFile ? fetched.path : stored.blobPath
         onOutcome({filepath})
         setHistory(addToHistory(url))
         setPhase({name: 'done', filepath})
