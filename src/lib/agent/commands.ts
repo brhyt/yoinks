@@ -229,7 +229,10 @@ export async function cmdCapture(args: string[]): Promise<Envelope<unknown>> {
     try {
       new URL(url)
     } catch {
-      throw new CommandError('usage', `“${url}” isn’t a link — paste a full url, like https://example.com/cat.jpg`)
+      throw new CommandError(
+        'usage',
+        `“${url}” isn’t a link — paste a full url, like https://example.com/cat.jpg`,
+      )
     }
 
     const all = flags.bools.has('all')
@@ -279,7 +282,10 @@ export async function cmdCapture(args: string[]): Promise<Envelope<unknown>> {
  * testable without a network: everything above it is flag parsing, everything
  * below it is bytes.
  */
-export function selectCandidates(candidates: readonly Candidate[], opts: {all?: boolean; best?: boolean}): Candidate[] {
+export function selectCandidates(
+  candidates: readonly Candidate[],
+  opts: {all?: boolean; best?: boolean},
+): Candidate[] {
   if (!candidates.length) throw new CommandError('no_candidates', 'Nothing yoinkable on that page.')
   if (opts.all) return [...candidates]
 
@@ -485,7 +491,10 @@ export async function cmdBoards(args: string[]): Promise<Envelope<unknown>> {
     }
 
     if (verb !== undefined) {
-      throw new CommandError('usage', `unknown boards subcommand “${verb}” — try “boards” or “boards new <name>”`)
+      throw new CommandError(
+        'usage',
+        `unknown boards subcommand “${verb}” — try “boards” or “boards new <name>”`,
+      )
     }
 
     const [boards, items] = await Promise.all([loadBoards(), loadItems()])

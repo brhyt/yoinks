@@ -24,8 +24,18 @@ const HELP = `
     $ yoinks                 (prompts for a url)
 
   Commands
-    lib [query]     browse your library
-    doctor          report what's available on this machine
+    lib [query]         browse your library
+    capture <url>       save without the picker (--best / --all)
+    find <query>        search the library
+    show <id>           one asset in full
+    brief <query>       design brief + reference paths, for agents
+    boards | tag | mv | note | rm | compact
+    export | import     move a board between machines
+    skill install       teach an agent to use your library
+    mcp                 run the stdio MCP server
+    doctor              report what's available on this machine
+
+  Every command emits JSON with --json, and implies it when piped.
 
   Options
     --theme <mode>  use auto, light, or dark for this run
@@ -60,13 +70,35 @@ if (args.command === 'doctor') {
   process.exit(0)
 }
 
-// Headless verbs never touch the alternate screen. --json is implied when
-// stdout isn't a terminal, so `yoinks find dark | jq` needs no flag.
+// The mcp server owns stdio for its whole lifetime — it must never print
+// anything that isn't a JSON-RPC frame, and it doesn't exit on its own.
+if (args.command === 'mcp') {
+  const {serveMcp} = await import('./lib/agent/mcp.js')
+  serveMcp()
+  // hold the module here: the server lives until the client disconnects, and
+  // falling through would render the TUI into a JSON-RPC pipe
+  await new Promise<void>(resolve => {
+    process.stdin.once('end', resolve)
+    process.stdin.once('close', resolve)
+  })
+  process.exit(0)
+}
+
 if (args.command && args.command !== 'lib') {
   const {commandFor, renderHuman} = await import('./lib/agent/commands.js')
   const {envelopeFor, exitCodeFor, render, wantsJson} = await import('./lib/agent/json.js')
+  type Envelope<T> = import('./lib/agent/json.js').Envelope<T>
 
-  const run = commandFor(args.command)
+  // verbs that live outside commands.ts, kept lazy so a `yoinks <url>` run
+  // never pays to load the agent surface or the bundle codec
+  const extra: Record<string, () => Promise<(a: string[]) => Promise<Envelope<unknown>>>> = {
+    brief: async () => (await import('./lib/agent/brief.js')).cmdBrief,
+    skill: async () => (await import('./lib/agent/skill.js')).cmdSkill,
+    export: async () => (await import('./lib/store/bundle.js')).cmdExport,
+    import: async () => (await import('./lib/store/bundle.js')).cmdImport,
+  }
+
+  const run = commandFor(args.command) ?? (extra[args.command] ? await extra[args.command]!() : undefined)
   if (run) {
     const explicitJson = args.commandArgs.includes('--json') ? true : undefined
     const asJson = wantsJson(explicitJson, Boolean(process.stdout.isTTY))
@@ -77,7 +109,10 @@ if (args.command && args.command !== 'lib') {
       envelope = envelopeFor(error)
     }
     const out = asJson ? render(envelope) : renderHuman(args.command, envelope)
-    if (envelope.ok) console.log(out)
+    // `yoinks export > file.yoink` streams the bundle itself to stdout, so the
+    // envelope has to go to stderr or it lands inside the tar and corrupts it
+    const ownsStdout = args.command === 'export' && !args.commandArgs.includes('--out')
+    if (envelope.ok && !ownsStdout) console.log(out)
     else console.error(out)
     process.exit(exitCodeFor(envelope))
   }

@@ -110,8 +110,8 @@ A delete is a tombstone:
 {"op": "del", "id": "01K3F7Q2M8ZR4V6N0YB1TXCJHD", "ts": "2026-07-26T09:14:02.006Z"}
 ```
 
-The blob stays until nothing references it; `yoinks compact` collects it.
-Tombstones are never removed — they're what stops a deleted item from
+The blob stays on disk regardless — nothing collects it yet (see **Compact**
+below). Tombstones are never removed: they're what stops a deleted item from
 resurrecting when a future sync replays an older log.
 
 ### Blob meta
@@ -199,8 +199,10 @@ is atomic on every filesystem yoinks targets. Two processes appending
 concurrently cannot interleave a line. No lock file, no journal.
 
 **Compact** — `yoinks compact` rewrites the log with only the winning record
-per id, keeps every tombstone, and garbage-collects unreferenced blobs. Pure
-housekeeping; never required.
+per id and keeps every tombstone. Pure housekeeping; never required.
+
+Blob garbage collection is not implemented: a tombstoned item's bytes stay on
+disk. `compact` reclaims log lines, not space. ⬜
 
 The reason for append-only over a JSON file rewrite: a rewrite that's
 interrupted at the wrong moment loses the whole library. An append that's

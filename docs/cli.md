@@ -110,13 +110,18 @@ yoinks capture <url> --dry-run --json      # probe only, capture nothing
 | `--board <b>` | file it (created if new) |
 | `--tag <t>` | repeatable |
 | `--note <text>` | |
-| `--shot` | force the screenshot extractor even though it's `demand`-tier |
+| `--shot` | ⬜ force the screenshot extractor — rejected until the `shot` extractor exists, rather than silently doing nothing |
 | `--dry-run` | probe and report candidates without fetching |
 | `--timeout <ms>` | default 30000 |
 
 Without `--all` or `--best`, a headless capture with multiple candidates
-fails with `no_candidates`-adjacent guidance rather than guessing. Ambiguity
-is the caller's to resolve.
+fails with `usage` (exit 2), listing what it found and how to narrow it.
+Ambiguity is the caller's to resolve — and the flags were wrong, not the
+page, which is why it isn't `no_candidates`. `--all` and `--best` together
+is also `usage`; preferring one silently would be a guess.
+
+`--timeout` bounds the *probe*, not the download — a 30 s clock would kill
+legitimate video captures. Download size is bounded separately, at 512 MB.
 
 Idempotent: re-capturing an identical asset writes an item, reuses the blob,
 and reports `"deduped": true`.
@@ -186,7 +191,7 @@ yoinks tag <id> <tag>...            # --rm to remove
 yoinks mv <id> --board <b>
 yoinks note <id> <text>
 yoinks rm <id>...                   # tombstone
-yoinks compact                      # collapse the log, gc orphan blobs
+yoinks compact                      # collapse the log, keeping every tombstone
 ```
 
 ### `yoinks export` / `yoinks import` ⬜

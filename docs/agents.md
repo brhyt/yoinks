@@ -1,6 +1,7 @@
 # The agent surface
 
-> Target state for v1.0. Status: ⬜ planned throughout.
+> Status: the CLI, skill and MCP server are built. Individual gaps are
+> marked ⬜ inline.
 
 ## Why this exists
 
@@ -13,7 +14,7 @@ collected, in a form an agent can act on:
 
 - a **weighted palette**, so colors come from your references and not from a
   default Tailwind scale
-- **type families** actually observed on pages you saved
+- **type families** observed on pages you saved (⬜ see step 4 below)
 - **absolute file paths**, so the agent opens the images and looks at them
 
 That last one is the whole design. Everything else is a summary an agent
@@ -164,13 +165,28 @@ yoinks brief --board hero-refs --md
 
 1. **Select** — run the same ranking as `find`, take the top `limit`.
 2. **Fuse palettes** — every blob's palette carries per-cluster `weight`
-   (see [rendering.md](rendering.md#palette-extraction)). Merge clusters
-   across the selection within ΔE < 8, sum weights, renormalize. Colors that
+   (see [rendering.md](rendering.md#palette-extraction)). Each reference is
+   normalized to one vote first, so a palette whose weights happen to sum
+   high can't outvote the board by scale alone. Then merge clusters across
+   the selection within distance 8, sum weights, renormalize. Colors that
    recur across many references dominate; a single loud outlier doesn't.
+
+   That 8 is on the codebase's weighted-RGB metric, which runs **0..765** —
+   not CIE Lab's 0..100, which is what "ΔE" would imply. It is deliberately
+   tighter than derivation's own merge distance of 25: inside one image a
+   merge joins two slices of one gradient, but across references it joins two
+   designers' separate choices, and averaging those invents a colour neither
+   reference contains.
 3. **Assign roles** — background / text / accent by the luminance and
    chroma heuristic. Hints, never claims.
-4. **Collect type** — font families from the page extractor's `@font-face`
-   and `font-family` observations, ranked by how many references show them.
+4. **Collect type** — font families from `BlobMeta.fonts`, ranked by how many
+   references show them.
+
+   ⬜ **Not yet reachable.** Nothing populates `BlobMeta.fonts` today: the page
+   extractor yields font *files* as capture candidates, not family names, and
+   derivation never writes the field. `type.families` is therefore `[]` on
+   every real library until a font-observation pass lands. The plumbing is
+   here so that pass is additive.
 5. **Notes** — your own `note` fields, verbatim. Never paraphrased. The
    whole value of a note is that a person wrote it about a specific thing.
 6. **Attach paths** — absolute paths to the originals, in rank order.

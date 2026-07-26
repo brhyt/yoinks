@@ -13,6 +13,11 @@ export const COMMANDS = [
   'note',
   'rm',
   'compact',
+  'brief',
+  'skill',
+  'mcp',
+  'export',
+  'import',
 ] as const
 export type Command = (typeof COMMANDS)[number]
 

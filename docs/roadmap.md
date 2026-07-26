@@ -2,8 +2,8 @@
 
 Status keys: ✅ shipped · 🚧 building · ⬜ planned
 
-Published today: **0.3.1** — video capture only. Everything from M1 onward
-is unbuilt.
+Published today: **0.3.1** — video capture only. M1–M5 are built on the
+`terminal-inspiration-capture` branch and unreleased; M6 is in progress.
 
 ## Shipped — 0.1 → 0.3.1 ✅
 
@@ -18,83 +18,97 @@ is unbuilt.
 - Cancel with `esc` at any phase, partial files cleaned up
 - Published to npm
 
-## M1 — Extractor registry 🚧
+## M1 — Extractor registry ✅
 
 The refactor that makes everything else possible. **No visible change.**
 
-- [ ] Regression lock: yt-dlp `-J` fixture → picker rows byte-identical to 0.3.1
-- [ ] `Candidate` / `Extractor` contracts
-- [ ] `classify.ts` — HEAD → content-type → fan-out plan
-- [ ] Existing yt-dlp logic rehomed behind the contract
-- [ ] `direct` extractor
-- [ ] `page` extractor — `og:image`, `twitter:image`, `srcset`, `@font-face`, css color vars
-- [ ] Fan-out with tiering, streaming merge, stable ordering
-- [ ] Picker cursor tracks candidate key, not index
+- [x] Regression lock: yt-dlp `-J` fixture → picker rows byte-identical to 0.3.1
+- [x] `Candidate` / `Extractor` contracts
+- [x] `classify.ts` — HEAD → content-type → fan-out plan
+- [x] Existing yt-dlp logic rehomed behind the contract
+- [x] `direct` extractor
+- [x] `page` extractor — `og:image`, `twitter:image`, `srcset`, `@font-face`, css color vars
+- [x] Fan-out with tiering, streaming merge, stable ordering
+- [x] Picker cursor tracks candidate key, not index
 
 **Done when:** `yoinks <youtube-url>` is indistinguishable from 0.3.1, and
 `yoinks <dribbble-url>` lists images in the picker.
 
-Risks: `page` needs `node-html-parser` (~40 KB, pure JS) plus a response
-size cap and redirect limit. Streaming into the picker is where the ordering
-bugs live — the test for "late candidate doesn't move the cursor" is worth
-writing before the feature.
+`page` ended up with **zero** dependencies — the html parsing is hand-rolled
+string scanning with quote tracking, since `<img[^>]*>` breaks on attribute
+values containing `>`. Response size and redirect depth are capped in
+`classify.ts` and `fetch-file.ts`.
 
-## M2 — The library ⬜
+## M2 — The library ✅
 
 Capture stops being a download.
 
-- [ ] `$YOINKS_HOME` resolution, legacy-path fallback
-- [ ] Content-addressed blob store
-- [ ] `items.jsonl` append + replay + tombstones
-- [ ] Ingest: hash → dedupe → blob + item
-- [ ] Boards and tags
-- [ ] `derive.ts` — dims, palette (median cut), font names
-- [ ] Always-resolvable ffmpeg sibling to `findFfmpeg()`
-- [ ] `compact`
+- [x] `$YOINKS_HOME` resolution, legacy-path fallback
+- [x] Content-addressed blob store
+- [x] `items.jsonl` append + replay + tombstones
+- [x] Ingest: hash → dedupe → blob + item
+- [x] Boards and tags
+- [x] `derive.ts` — dims, duration, palette (median cut)
+- [ ] font-family observation — the `BlobMeta.fonts` slot exists, nothing fills it ⬜
+- [x] Always-resolvable ffmpeg sibling to `findFfmpeg()`
+- [x] `compact`
 
 **Done when:** capturing twice writes one blob and two items, and the whole
 library survives `rm -rf cache/`.
 
-## M3 — Seeing it ⬜
+## M3 — Seeing it ✅
 
 The milestone that makes it a moodboard. Highest risk, so prove thumbnail
 quality early — if a 44×22 half-block thumbnail isn't recognizable, the
 browse half of the product needs rethinking, and that's worth finding out
 before M4 exists.
 
-- [ ] ffmpeg → raw rgb24 decode pipe
-- [ ] Half-block renderer, truecolor + 256-color fallback
-- [ ] Capability detection, `yoinks doctor`
-- [ ] Thumbnail cache, warmed at ingest
-- [ ] Rect click targets in `click-map.ts`
-- [ ] `library` phase — grid, `/` search, multi-select
-- [ ] `detail` phase — large preview, palette swatches, copy hex
-- [ ] `boards` phase
-- [ ] Kitty + iTerm2 protocols in detail view
+- [x] ffmpeg → raw rgb24 decode pipe
+- [x] Half-block renderer, truecolor + 256-color fallback
+- [x] Capability detection, `yoinks doctor`
+- [x] Thumbnail cache, warmed at ingest
+- [x] Rect click targets in `click-map.ts`
+- [x] `library` phase — grid, `/` search, multi-select
+- [x] `detail` phase — large preview, palette swatches, copy hex
+- [x] `boards` phase
+- [ ] Kitty + iTerm2 protocols in detail view ⬜ (half-block ships; protocols deferred)
 
-## M4 — Headless ⬜
+## M4 — Headless ✅
 
-- [ ] `--json` envelope, exit codes, closed error-code set
-- [ ] Non-TTY auto-detection
-- [ ] `capture`, `find`, `show`, `boards`, `tag`, `mv`, `note`, `rm`
-- [ ] `find --color` nearest-palette ranking
-- [ ] Store and query tests against a temp `YOINKS_HOME`
+- [x] `--json` envelope, exit codes, closed error-code set
+- [x] Non-TTY auto-detection
+- [x] `capture`, `find`, `show`, `boards`, `tag`, `mv`, `note`, `rm`
+- [x] `find --color` nearest-palette ranking
+- [x] Store and query tests against a temp `YOINKS_HOME`
 
-## M5 — Agents ⬜
+## M5 — Agents ✅
 
 The reason for all of it.
 
-- [ ] `brief` — palette fusion, roles, type ranking, notes, paths
-- [ ] `brief --md`, `--no-paths`, `--no-notes`
-- [ ] `SKILL.md` + `yoinks skill install` / `print`
-- [ ] `yoinks mcp` — search, brief, get, list_boards, capture
-- [ ] Docs pass against the real implementation
+- [x] `brief` — palette fusion, roles, type ranking, notes, paths
+- [x] `brief --md`, `--no-paths`, `--no-notes`
+- [x] `SKILL.md` + `yoinks skill install` / `print`
+- [x] `yoinks mcp` — search, brief, get, list_boards, capture
+- [x] Docs pass against the real implementation
 
-## M6 — Portable ⬜
+## M6 — Portable 🚧
 
-- [ ] `export` / `import` bundles
-- [ ] `import --dry-run`
+- [x] `export` / `import` bundles
+- [x] `import --dry-run`
 - [ ] Naming decision, and the home-directory migration if it changes
+
+## Known gaps in what's built
+
+- `type.families` in a brief is always empty — nothing populates
+  `BlobMeta.fonts` yet. See [agents.md](agents.md#computation).
+- `compact` collapses the log but does not collect orphan blobs, so it
+  reclaims lines, not disk.
+- The library's detail view is read-only: `t`, `c`, `o`, `x` and multi-select
+  from the [cli.md](cli.md) keymap need store mutations that aren't wired.
+- No row cap on the picker. 146 rows from a dense portfolio is scrollable;
+  an 800-product listing page would not be.
+- `capture --shot` is rejected rather than accepted-and-ignored, because the
+  `shot` extractor doesn't exist yet.
 
 ## Later
 
