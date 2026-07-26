@@ -1,7 +1,19 @@
 import {isThemeMode, type ThemeMode} from '../theme.js'
 
 /** Verbs. A bare `yoinks` or `yoinks <url>` has no command — you just paste. */
-export const COMMANDS = ['doctor', 'lib'] as const
+export const COMMANDS = [
+  'doctor',
+  'lib',
+  'capture',
+  'find',
+  'show',
+  'boards',
+  'tag',
+  'mv',
+  'note',
+  'rm',
+  'compact',
+] as const
 export type Command = (typeof COMMANDS)[number]
 
 const isCommand = (value: string): value is Command => (COMMANDS as readonly string[]).includes(value)
@@ -23,6 +35,16 @@ export function parseArgs(args: string[]): CliArgs {
 
   for (let index = 0; index < args.length; index++) {
     const arg = args[index]!
+
+    // Everything after a verb belongs to that verb. Commands own flags this
+    // parser has never heard of (--board, --dry-run, --color), so it must stop
+    // reading rather than reject them.
+    if (!arg.startsWith('-') && isCommand(arg) && positional.length === 0) {
+      result.command = arg
+      result.commandArgs = args.slice(index + 1)
+      return result
+    }
+
     if (arg === '-h' || arg === '--help') {
       result.help = true
     } else if (arg === '-v' || arg === '--version') {
@@ -43,14 +65,7 @@ export function parseArgs(args: string[]): CliArgs {
     }
   }
 
-  const [first, ...rest] = positional
-  if (first !== undefined && isCommand(first)) {
-    result.command = first
-    result.commandArgs = rest
-    return result
-  }
-
   if (positional.length > 1) return {...result, error: 'expected a single url'}
-  result.initialUrl = first
+  result.initialUrl = positional[0]
   return result
 }

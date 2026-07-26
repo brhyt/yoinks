@@ -60,6 +60,29 @@ if (args.command === 'doctor') {
   process.exit(0)
 }
 
+// Headless verbs never touch the alternate screen. --json is implied when
+// stdout isn't a terminal, so `yoinks find dark | jq` needs no flag.
+if (args.command && args.command !== 'lib') {
+  const {commandFor, renderHuman} = await import('./lib/agent/commands.js')
+  const {envelopeFor, exitCodeFor, render, wantsJson} = await import('./lib/agent/json.js')
+
+  const run = commandFor(args.command)
+  if (run) {
+    const explicitJson = args.commandArgs.includes('--json') ? true : undefined
+    const asJson = wantsJson(explicitJson, Boolean(process.stdout.isTTY))
+    let envelope
+    try {
+      envelope = await run(args.commandArgs)
+    } catch (error) {
+      envelope = envelopeFor(error)
+    }
+    const out = asJson ? render(envelope) : renderHuman(args.command, envelope)
+    if (envelope.ok) console.log(out)
+    else console.error(out)
+    process.exit(exitCodeFor(envelope))
+  }
+}
+
 const initialUrl = args.initialUrl
 const initialThemeMode = args.themeMode ?? 'auto'
 

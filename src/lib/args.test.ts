@@ -40,8 +40,16 @@ test('a leading verb is a command, and the rest is its arguments', () => {
   assert.equal(lib.error, undefined)
 })
 
-test('a command still takes options', () => {
-  const parsed = parseArgs(['lib', '--theme', 'dark', 'brutalist'])
+test('flags after a command belong to the command, not to yoinks', () => {
+  // commands own flags this parser has never heard of, so it stops reading
+  const parsed = parseArgs(['find', 'dark', '--color', '#ff6b35', '--limit', '5'])
+  assert.equal(parsed.command, 'find')
+  assert.deepEqual(parsed.commandArgs, ['dark', '--color', '#ff6b35', '--limit', '5'])
+  assert.equal(parsed.error, undefined)
+})
+
+test('global options still work before a command', () => {
+  const parsed = parseArgs(['--theme', 'dark', 'lib', 'brutalist'])
   assert.equal(parsed.command, 'lib')
   assert.equal(parsed.themeMode, 'dark')
   assert.deepEqual(parsed.commandArgs, ['brutalist'])

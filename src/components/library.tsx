@@ -464,7 +464,7 @@ export function LibraryScreen({isActive, columns, rows, onExit, onClickTargets}:
                         color={isSelected ? theme.primary : theme.gray}
                         dimColor={!isSelected && theme.dimSecondary}
                       >
-                        {`${isSelected ? '❯ ' : '  '}${truncate(titleFor(hit.item), Math.max(1, layout.thumbCols - 2))}`}
+                        {`${marker}${truncate(titleFor(hit.item), Math.max(1, layout.thumbCols - 2))}`}
                       </Text>
                     </Box>
                   )
@@ -501,7 +501,9 @@ export function LibraryScreen({isActive, columns, rows, onExit, onClickTargets}:
       {mode === 'boards' && (
         <Box flexDirection="column" flexShrink={0}>
           {boards.length === 0 ? (
-            <Text color={theme.gray} dimColor={theme.dimSecondary}>no boards yet — capture with --board to make one</Text>
+            <Text color={theme.gray} dimColor={theme.dimSecondary}>
+              no boards yet — capture with --board to make one
+            </Text>
           ) : (
             boards.map((entry, index) => (
               <Text

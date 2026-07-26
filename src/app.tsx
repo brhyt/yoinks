@@ -211,6 +211,7 @@ function AppContent({
   const [libraryTargets, setLibraryTargets] = useState<ClickTarget[]>([])
 
   const columns = stdout?.columns && stdout.columns > 0 ? stdout.columns : 80
+  const libraryRows = Math.max(6, (stdout?.rows && stdout.rows > 1 ? stdout.rows : 24) - 1)
   const boxWidth = Math.max(14, Math.min(64, columns - 6))
   const contentWidth = Math.max(10, Math.min(columns - 4, 78))
 
@@ -425,6 +426,23 @@ function AppContent({
     Boolean(process.stdin.isTTY),
   )
 
+  // The library owns the whole screen. It registers click rectangles against
+  // its own geometry assuming it sits at the top-left, so it must not be
+  // centred inside FullScreen or wrapped in the logo/hints chrome.
+  if (phase.name === 'library') {
+    return (
+      <Box width={columns} height={libraryRows} flexDirection="column" flexShrink={0}>
+        <LibraryScreen
+          isActive
+          columns={columns}
+          rows={libraryRows}
+          onExit={resetToInput}
+          onClickTargets={setLibraryTargets}
+        />
+      </Box>
+    )
+  }
+
   return (
     <FullScreen>
       <Logo />
@@ -432,16 +450,6 @@ function AppContent({
       <Text color={theme.primary}>{TAGLINE}</Text>
       <Text color={theme.gray} dimColor={theme.dimSecondary}>youtube · x · instagram · threads · tiktok · +1800 more</Text>
       <Gap />
-
-      {phase.name === 'library' && (
-        <LibraryScreen
-          isActive
-          columns={columns}
-          rows={Math.max(6, (stdout?.rows ?? 24) - 12)}
-          onExit={resetToInput}
-          onClickTargets={setLibraryTargets}
-        />
-      )}
 
       {phase.name === 'input' && (
         <Box flexDirection="column" alignItems="center">
