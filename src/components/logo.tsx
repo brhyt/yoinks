@@ -14,11 +14,14 @@ import {type Theme, useTheme} from '../theme.js'
  * leans by row, so a ragged grid walks the beam off the letterforms.
  */
 const ART = [
-  '  ▄▀▀▄                        ',
-  ' ▐░▒ ▀▄▖   ▛▀▜ ▌   ▌ ▌ ▛▀▘ ▌ ▖',
-  '▗▛▒▒▒▒▀    ▙▄▟ ▌   ▌ ▌ ▌   ▙▟ ',
-  '▐▒▒▓▓▒▒▒▖  ▌   ▙▄▖ ▙▄▟ ▙▄▖ ▌ ▝',
-  ' ▀▀▀▀▀▀▀                      ',
+  '         ▒▓███▓▒                           ',
+  '       ▒▓███████▓▒                         ',
+  '      ▒▓███░█████▓▓▒▒░  ▛▀▜ ▌   ▌ ▌ ▛▀▘ ▌ ▖',
+  '      ▓███████████▓▒    ▙▄▟ ▌   ▌ ▌ ▌   ▙▟ ',
+  '    ▒▓███████████▓      ▌   ▙▄▖ ▙▄▟ ▙▄▖ ▌ ▝',
+  '  ▒▓████▓▒▒▒▓████                          ',
+  ' ▒▓█████▓▓▓▓▓████▓▒                        ',
+  '  ▒▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒                         ',
 ]
 const GRID = ART.map(line => [...line])
 const ROWS = GRID.length
