@@ -19,12 +19,15 @@ so what they build actually looks like your taste.
 
 ---
 
-> **Status.** This README describes **v1.0**. The published CLI is **0.3.1**,
-> which does video downloads only. Everything below is marked:
+> **Status.** This README describes **v1.0**, which is unreleased.
+> `pluck-tools` has never been published. The only thing on npm today is
+> [yoinks](https://www.npmjs.com/package/yoinks) **0.3.1** — the video
+> downloader this is built on, a separate package by a separate author.
+> Everything below is marked:
 >
 > | | |
 > |---|---|
-> | ✅ | shipped in 0.3.1 |
+> | ✅ | inherited from yoinks 0.3.1, still works |
 > | 🚧 | building now |
 > | ⬜ | planned |
 >
@@ -258,6 +261,17 @@ creators.
 The source url is stored with every asset for exactly this reason — so
 attribution is never more than one command away.
 
+## Credits
+
+pluck is built on [yoinks](https://github.com/pablostanley/yoinks) by
+**Pablo Stanley**, and keeps its terminal UI, its terminal-aware themes, its
+mouse handling, and its yt-dlp capture path — the parts that made it a
+pleasure to use before it was a library. The extractor registry, the
+content-addressed store, the terminal image rendering and the agent surface
+are new; everything under them is his.
+
+yoinks is MIT licensed, and so is this.
+
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) — original work © Pablo Stanley.
